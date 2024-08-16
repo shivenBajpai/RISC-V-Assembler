@@ -1,0 +1,21 @@
+(phase 1) - All non jump instructions
+(phase 2) - Add jump instructions
+(phase 3) - Add pseudo instructions (optional, But keep it in mind)
+
+I need to:
+Have a usable list of all instructions and their categorization
+Have a list of pseudo instructions and their conversions
+Have a list of register aliases
+Have a proper control system to handle errors
+
+Have a makefile
+Have a test harness
+Have a README
+Have a report (latex obviously)
+
+First (phase 1) Remove whitespace and comments
+      (phase 2) scan all the code for Labels and note their positions, and also remove the labels as well
+
+Next Read in instructions line by line and convert them to hexcode using the applicable lookup tables as well as validate the instructions
+
+Next Exit gracefully
