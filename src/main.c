@@ -60,6 +60,7 @@ void process_input(FILE *in_fp, FILE *out_fp, label_index* index) {
 	int line_len = 0;
 	bool comment_flag = false;
 	bool lw_flag = true;
+	bool whitespace_flag = false;
 	bool cw_flag = false;
 	bool instr_flag = false;
 	char label_buffer[128];
@@ -86,7 +87,7 @@ void process_input(FILE *in_fp, FILE *out_fp, label_index* index) {
 				if (comment_flag) break;
 				if (lw_flag) printf("WARN: Empty Label on line %d, Ignoring and moving on...", linecount);
 				else {	
-					label_buffer[line_len+1] = '\0';
+					label_buffer[line_len] = '\0';
 					add_label(index, label_buffer, instruction);
 					fseek(out_fp, -line_len, SEEK_CUR);
 					instr_flag = false;
@@ -97,17 +98,19 @@ void process_input(FILE *in_fp, FILE *out_fp, label_index* index) {
 			case '\t':
 				if (comment_flag) break;
 				if (lw_flag || cw_flag) break;
-				else cw_flag = true;
+				cw_flag = true;
+				whitespace_flag = true;
 
 			default:
 				if (comment_flag) break;
 				lw_flag = false;
-				cw_flag = false;
+				if (!whitespace_flag) cw_flag = false;
 				instr_flag = true;
 				label_buffer[line_len] = c;
 				fputc(c, out_fp);
 				line_len += 1;
 		}
+		whitespace_flag = false;
 	}
 }
 
