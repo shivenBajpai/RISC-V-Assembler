@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "index.h"
+#include "translator.h"
 
-void process_input(FILE *in_fp, FILE *out_fp, label_index* index) {
+int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, managed_array* line_mapping) {
 	char c;
 	int linecount = 1;
 	int instruction = 0;
@@ -22,8 +23,11 @@ void process_input(FILE *in_fp, FILE *out_fp, label_index* index) {
 				break;
 
 			case '\n':
-				if (instr_flag) fputc('\n', out_fp);
-				instruction += instr_flag?1:0;
+				if (instr_flag) {
+					fputc('\n', out_fp);
+					append(line_mapping, linecount);
+					instruction += 1;
+				} 
 				linecount += 1;
 				line_len = 0;
 				comment_flag = false;
@@ -34,7 +38,8 @@ void process_input(FILE *in_fp, FILE *out_fp, label_index* index) {
 
 			case ':':
 				if (comment_flag) break;
-				if (lw_flag) printf("WARN: Empty Label on line %d, Ignoring and moving on...", linecount);
+				if (lw_flag) printf("WARN: Empty Label on line %d, Ignoring and moving on...\n", linecount);
+				if (line_len >= 128) printf("ERROR: Label too long on line %d, Stopping...\n", linecount);
 				else {	
 					label_buffer[line_len] = '\0';
 					add_label(index, label_buffer, instruction);
@@ -55,38 +60,109 @@ void process_input(FILE *in_fp, FILE *out_fp, label_index* index) {
 				lw_flag = false;
 				if (!whitespace_flag) cw_flag = false;
 				instr_flag = true;
-				label_buffer[line_len] = c;
+				if (line_len<128) label_buffer[line_len] = c;
 				fputc(c, out_fp);
 				line_len += 1;
 		}
 		whitespace_flag = false;
 	}
+
+	return 0;
+}
+
+int second_pass(FILE* clean_fp, int* hexcode, label_index* index, managed_array* line_mapping) {
+	
+	char name[8]; // Sufficient for any valid instruction/pseudo instruction in Base class
+	int instruction_count = 0;
+	int i = 0;
+	char c;
+
+	hashmap* aliases = build_register_table();
+	hashmap* instructions = build_instruction_table();
+
+	while ((c = fgetc(clean_fp)) != EOF) {
+		if (i<8) {
+			if (c == ' ' || c == '\t') {
+				name[i] = '\0';
+
+				// Attempt instruction translation
+				instruction_handler* handler = hm_get(instructions, name);
+				if (!handler) {
+					printf("Error on line %d\nInvalid Instruction: %s\n                     ^^^^^^^^\n", line_mapping->values[instruction_count], name);
+					return 1;
+				}
+
+				int addend = handler->handler(&clean_fp, aliases, index, line_mapping->values[instruction_count]);
+				if (addend < 0) {
+					return -1;
+				}
+				hexcode[instruction_count] = handler->constant + addend;
+
+				instruction_count++;
+			} else name[i] = c;
+		} else {
+			name[7] = '\0';
+			printf("Error on line %d\nInvalid Instruction: %s\n                     ^^^^^^^^\n", line_mapping->values[instruction_count], name);
+			return 1;
+		}
+
+	}
+		
+	return 0;
 }
 
 int main(void) {
 	
 	FILE *in_fp = fopen("input.s", "r");
-	FILE *out_fp = fopen("cleaned.s", "w");
+	FILE *clean_fp = fopen("cleaned.s", "w+");
 	label_index *index;
+	managed_array *line_mapping;
+	int result;
 	index = new_label_index();
-	
+	line_mapping = new_managed_array();
+
 	if (!in_fp) {
 		printf("FATAL: Failed to read input.s!\nExiting...\n");
 		return 1;
 	}
-	if (!out_fp) {
-		printf("FATAL: Failed to open temp.s!\nExiting...\n");
+	if (!clean_fp) {
+		printf("FATAL: Failed to open cleaned.s!\nExiting...\n");
 		return 1;
 	}
 
-	process_input(in_fp, out_fp, index);
+	if ((result = first_pass(in_fp, clean_fp, index, line_mapping)) != 0) {
+		printf("FATAL: Code Parsing failed with code %d\nExiting...\n", result);
+		return 1;
+	}
 	
 	fclose(in_fp);
-	fclose(out_fp);
-	FILE *code_fp = fopen("cleaned.s", "r");
+	fseek(clean_fp, 0, SEEK_SET);
 
-	debug_print_label_index(index);
+	int hexcode[line_mapping->len];
+	// int instruction_count = 0;
+	// char instruction[256];
+
+	// while (fgets(instruction, 256, clean_fp) != NULL) {
+	// 	hexcode[instruction_count] = translate_instruction(instruction, index, line_mapping->values[instruction_count]);
+	// 	instruction_count++;
+	// }
+
+	if ((result = second_pass(clean_fp, hexcode, index, line_mapping)) != 0) {
+		printf("FATAL: Code Compilation failed with code %d\nExiting...\n", result);
+		return 1;
+	}
+
+	FILE *output_fp = fopen("output.hex", "wb");
+	if (!output_fp) {
+		printf("FATAL: Failed to write to output.hex!\nExiting...\n");
+		return 1;
+	}
+
+	fwrite(hexcode, 4, line_mapping->len, output_fp);
+	fclose(output_fp);
+	fclose(clean_fp);
 
 	free_label_index(index);
+	free_managed_array(line_mapping);
 	return 0;
 }
