@@ -77,8 +77,8 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, managed_array*
 	int i = 0;
 	char c;
 
-	hashmap* aliases = build_register_table();
-	hashmap* instructions = build_instruction_table();
+	// hashmap* aliases = build_register_table();
+	// hashmap* instructions = build_instruction_table();
 
 	while ((c = fgetc(clean_fp)) != EOF) {
 		if (i<8) {
@@ -86,20 +86,31 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, managed_array*
 				name[i] = '\0';
 
 				// Attempt instruction translation
-				instruction_handler* handler = hm_get(instructions, name);
-				if (!handler) {
-					printf("Error on line %d\nInvalid Instruction: %s\n                     ^^^^^^^^\n", line_mapping->values[instruction_count], name);
+				
+				const instruction_info* instruction = search_instruction(name);
+
+				if (!instruction) {
+					printf("Error on line %d\nUnknown Instruction: %s\n                     ^^^^^^^^\n", line_mapping->values[instruction_count], name);
 					return 1;
 				}
 
-				int addend = handler->handler(&clean_fp, aliases, index, line_mapping->values[instruction_count]);
-				if (addend < 0) {
-					return -1;
-				}
-				hexcode[instruction_count] = handler->constant + addend;
+				int addend;
 
+				switch (instruction->handler_type) {
+					case R_TYPE:
+						addend = R_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break;
+					default:
+						printf("Error on line %d\nUnclassified type, did you forget to write a case?\n", line_mapping->values[instruction_count]);
+						return 1;
+				}
+				
+				if (addend < 0) return 1;
+				hexcode[instruction_count] = instruction->constant + (unsigned int) addend;
+				printf("Wrote instruction %d: %d\n", instruction_count, hexcode[instruction_count]);
 				instruction_count++;
-			} else name[i] = c;
+				i = 0;
+			} else name[i++] = c;
 		} else {
 			name[7] = '\0';
 			printf("Error on line %d\nInvalid Instruction: %s\n                     ^^^^^^^^\n", line_mapping->values[instruction_count], name);
@@ -158,7 +169,7 @@ int main(void) {
 		return 1;
 	}
 
-	fwrite(hexcode, 4, line_mapping->len, output_fp);
+	fwrite(hexcode, 4, (line_mapping->len) + 1, output_fp);
 	fclose(output_fp);
 	fclose(clean_fp);
 

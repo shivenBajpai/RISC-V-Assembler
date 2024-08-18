@@ -1,8 +1,4 @@
-#asda
-DAbba:
-tom x1
-
-
-    invalidlylong
-bong     x1
-
+#My Code starts here
+    add x5, x1, x2
+    add x4, x3, x6
+    slt x0, x7, x8
