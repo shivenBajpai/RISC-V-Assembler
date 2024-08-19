@@ -1,5 +1,4 @@
-/build/*
 /bin/cleaned.s
 *.o
-main
+riscv_asm
 /.vscode/

@@ -1,25 +1,36 @@
 SHELL=/bin/bash
+CC = gcc
+CCFLAGS = -g
+CLFLAGS = 
 
-SRCS=$(wildcard ./src/*.c)
-OBJ_NAMES=$(SRCS:.c=.o)
-OBJS=$(OBJ_NAMES:src=build)
+SRCDIR=src
+OBJDIR=build
+OUTDIR=bin
+TARGET=riscv_asm
 
-run: ./bin/main
-	@cd bin && ./main
+# DO NOT EDIT BELOW
+
+SRCS=$(wildcard ./$(SRCDIR)/*.c)
+OBJ_NAMES=$(patsubst %.c,%.o,$(SRCS))
+OBJS=$(patsubst ./$(SRCDIR)%,./$(OBJDIR)%,$(OBJ_NAMES))
+TARGET_PATH=./$(OUTDIR)/$(TARGET)
+
+run: $(TARGET_PATH)
+	@cd bin && ./$(TARGET)
 
 .PHONY: build
-build: ./bin/main
+build: $(TARGET_PATH)
 
-./bin/main: $(OBJS)
+$(TARGET_PATH): $(OBJS)
 	@echo "Linking..."
-	@gcc -o ./bin/main $(OBJS)
+	@$(CC) $(CLFLAGS) -o $(TARGET_PATH) $(OBJS)
 
-./build/%.o: %.c
+./build/%.o: ./$(SRCDIR)/%.c
 	@echo "Compiling $<..."
-	@gcc -c $< -o $(@: src=build )
+	@$(CC) $(CCFLAGS) -c $< -o $@
 
 .PHONY: clean
 clean:
 	@echo "Removing Build files..."
-	-@rm ./build/*
-	-@rm ./bin/riscv_asm
+	-@rm ./$(OBJDIR)/*.o
+	-@rm ./$(OUTDIR)/$(TARGET)
