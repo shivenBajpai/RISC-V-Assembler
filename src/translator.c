@@ -156,7 +156,7 @@ const instruction_info* search_instruction(char* name) {
     return NULL;
 }
 
-int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, int* line_number) {
+int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, int* line_number, int instruction_number) {
     FILE* fp = *fpp;
     int i = 0;
     int r = 0;
@@ -186,12 +186,13 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
                 break;
 
             case ')':
-                fp++;
+                break;
             case '\n':
                 goto exit;
 
             default:
-                if (i==7) {
+                if (i==126) {
+                    args[r*128 + i] = '\0';
                     printf("Error on line %d, Illegal operand: %s\n", *line_number, args + r*128);
                     free(args);
                     return NULL;
@@ -207,7 +208,7 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
         return NULL;
     }
     args[r*128 + i] = '\0';
-    int* converted_args = malloc(sizeof(unsigned long)*(types[r-1]==I2_TYPE || types[r-1]==S_TYPE)?(n+1):n);
+    int* converted_args = malloc(sizeof(unsigned long)*n);
     if (!converted_args) {
         printf("Out of memory!");
         free(args);
@@ -221,13 +222,12 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
             case IMMEDIATE:
 
                 char *endptr;
-                
-                if (args[0] == '0' && args[1] == 'x') {
-                    converted_args[r] = strtol(arg, &endptr, 16);    
-                } else if (args[0] == '0' && args[1] == 'o') {
-                    converted_args[r] = strtol(arg, &endptr, 8);
-                } else if (args[0] == '0' && args[1] == 'b') {
-                    converted_args[r] = strtol(arg, &endptr, 2);
+                if (arg[0] == '0' && arg[1] == 'x') {
+                    converted_args[r] = strtol(arg+2, &endptr, 16);    
+                } else if (arg[0] == '0' && arg[1] == 'o') {
+                    converted_args[r] = strtol(arg+2, &endptr, 8);
+                } else if (arg[0] == '0' && arg[1] == 'b') {
+                    converted_args[r] = strtol(arg+2, &endptr, 2);
                 } else {
                     converted_args[r] = strtol(arg, &endptr, 10);
                 }
@@ -242,7 +242,7 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
 
             case OFFSET:
 
-                if (isalpha(arg[0])) {
+                if (!isalpha(arg[0])) {
                     char *endptr;
                     converted_args[r] = strtol(arg, &endptr, 10);
 
@@ -263,7 +263,7 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
                         return NULL;
                     }
 
-                    converted_args[r] = position - *line_number;
+                    converted_args[r] = (position - instruction_number)*4;
                 }
 
                 break;
@@ -351,11 +351,12 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
 //     return result;
 // }
 
-long R_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+long R_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, REGISTER, REGISTER};
-    int* args = args_parser(args_raw, labels, 3, types, line_number);
+    int* args = args_parser(args_raw, labels, 3, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
         return -1;
     }
 
@@ -365,11 +366,12 @@ long R_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
     return result;
 }
 
-long I1_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+long I1_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, REGISTER, IMMEDIATE};
-    int* args = args_parser(args_raw, labels, 3, types, line_number);
+    int* args = args_parser(args_raw, labels, 3, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
         return -1;
     }
 
@@ -382,11 +384,12 @@ long I1_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
     return result;
 }
 
-long I2_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+long I2_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, IMMEDIATE, REGISTER};
-    int* args = args_parser(args_raw, labels, 3, types, line_number);
+    int* args = args_parser(args_raw, labels, 3, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
         return -1;
     }
 
@@ -399,11 +402,12 @@ long I2_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
     return result;
 }
 
-long S_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+long S_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, IMMEDIATE, REGISTER};
-    int* args = args_parser(args_raw, labels, 3, types, line_number);
+    int* args = args_parser(args_raw, labels, 3, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
         return -1;
     }
 
@@ -412,31 +416,33 @@ long S_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
     }
 
     int rearranged_immediate = ((args[1] & 0x0000001F) << 7) + ((args[1] & 0x00000FE0) << 20);
-    int result = (args[0] << 15) + rearranged_immediate + (args[1] << 20);
+    int result = (args[2] << 15) + rearranged_immediate + (args[0] << 20);
     free(args);
     return result;
 }
 
-long B_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+long B_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, REGISTER, OFFSET};
-    int* args = args_parser(args_raw, labels, 3, types, line_number);
+    int* args = args_parser(args_raw, labels, 3, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
         return -1;
     }
 
-    int rearranged_offset = ((args[2] & 0x0000001E) << 7) + ((args[1] & 0x00000400) >> 4) + ((args[1] & 0x00000800) << 19) + ((args[1] & 0x000007E0) << 20);
+    int rearranged_offset = ((args[2] & 0x0000001E) << 7) + ((args[2] & 0x00000800) >> 4) + ((args[2] & 0x00001000) << 19) + ((args[2] & 0x000007E0) << 20);
     int result = (args[0] << 15) + (args[1] << 20) + rearranged_offset;
 
     free(args);
     return result;
 }
 
-long U_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+long U_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, IMMEDIATE};
-    int* args = args_parser(args_raw, labels, 2, types, line_number);
+    int* args = args_parser(args_raw, labels, 2, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
         return -1;
     }
 
@@ -446,30 +452,33 @@ long U_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
     return result;
 }
 
-long J_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
-    argument_type types[] = {REGISTER, IMMEDIATE};
-    int* args = args_parser(args_raw, labels, 2, types, line_number);
-
-    if (!args) {
-        return -1;
-    }
-
-    int result = (args[0] << 7) + (args[1] & (0xFFFFF000));
-
-    free(args);
-    return result;
-}
-
-long I3_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+long J_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, OFFSET};
-    int* args = args_parser(args_raw, labels, 2, types, line_number);
+    int* args = args_parser(args_raw, labels, 2, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
         return -1;
     }
 
-    int rearranged_offset = (args[1] & 0x000FF000) + ((args[1] & 0x000007FE) << 20) + ((args[1] & 0x00000400) << 9) + ((args[1] & 0x00080000) << 11);
+    int rearranged_offset = (args[1] & 0x000FF000) + ((args[1] & 0x000007FE) << 20) + ((args[1] & 0x00000800) << 9) + ((args[1] & 0x00100000) << 11);
     int result = (args[0] << 7) + rearranged_offset;
+
+    free(args);
+    return result;
+}
+
+long I3_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
+    argument_type types[] = {REGISTER, REGISTER, IMMEDIATE};
+    int* args = args_parser(args_raw, labels, 3, types, line_number, instruction_number);
+
+    if (!args) {
+        *fail_flag = true;
+        return -1;
+    }
+
+    int rearranged_offset = (args[2] & 0x000007FE) << 20;//(args[0] & 0x000FF000) + ((args[2] & 0x000007FE) << 20) + ((args[1] & 0x00000400) << 9) + ((args[1] & 0x00080000) << 11);
+    int result = (args[0] << 7) + (args[1] << 15) + rearranged_offset;
 
     free(args);
     return result;

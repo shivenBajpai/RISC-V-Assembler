@@ -96,38 +96,39 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, managed_array*
 				}
 
 				int addend;
+				bool fail_flag = false;
 
 				switch (instruction->handler_type) {
 					case R_TYPE:
-						addend = R_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = R_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break;
 
 					case I1_TYPE:
-						addend = I1_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = I1_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
 					case I2_TYPE:
-						addend = I2_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = I2_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
 					case S_TYPE:
-						addend = S_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = S_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
 					case B_TYPE:
-						addend = B_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = B_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
 					case U_TYPE:
-						addend = U_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = U_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
 					case J_TYPE:
-						addend = J_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = J_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
 					case I3_TYPE:
-						addend = I3_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						addend = I3_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
 					case I4_TYPE:
@@ -138,7 +139,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, managed_array*
 						return 1;
 				}
 				
-				if (addend < 0) return 1;
+				if (fail_flag) return 1;
 				hexcode[instruction_count] = instruction->constant + (unsigned int) addend;
 				printf("Wrote instruction %d: %d\n", instruction_count, hexcode[instruction_count]);
 				instruction_count++;
@@ -191,6 +192,7 @@ int main(void) {
 	// 	instruction_count++;
 	// }
 
+	// debug_print_label_index(index);
 	if ((result = second_pass(clean_fp, hexcode, index, line_mapping)) != 0) {
 		printf("FATAL: Code Compilation failed with code %d\nExiting...\n", result);
 		return 1;
@@ -202,7 +204,7 @@ int main(void) {
 		return 1;
 	}
 
-	fwrite(hexcode, 4, (line_mapping->len) + 1, output_fp);
+	fwrite(hexcode, 4, (line_mapping->len), output_fp);
 	fclose(output_fp);
 	fclose(clean_fp);
 
