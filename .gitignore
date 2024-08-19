@@ -1,4 +1,5 @@
 /build/*
+/bin/cleaned.s
 *.o
 main
 /.vscode/
