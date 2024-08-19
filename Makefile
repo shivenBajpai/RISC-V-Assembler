@@ -22,4 +22,4 @@ build: ./bin/main
 clean:
 	@echo "Removing Build files..."
 	-@rm ./build/*
-	-@rm ./bin/main
+	-@rm ./bin/riscv_asm
