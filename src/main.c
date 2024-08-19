@@ -78,9 +78,6 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, managed_array*
 	int i = 0;
 	char c;
 
-	// hashmap* aliases = build_register_table();
-	// hashmap* instructions = build_instruction_table();
-
 	while ((c = fgetc(clean_fp)) != EOF) {
 		if (i<8) {
 			if (c == ' ' || c == '\t') {
@@ -184,15 +181,9 @@ int main(void) {
 	fseek(clean_fp, 0, SEEK_SET);
 
 	int hexcode[line_mapping->len];
-	// int instruction_count = 0;
-	// char instruction[256];
-
-	// while (fgets(instruction, 256, clean_fp) != NULL) {
-	// 	hexcode[instruction_count] = translate_instruction(instruction, index, line_mapping->values[instruction_count]);
-	// 	instruction_count++;
-	// }
 
 	// debug_print_label_index(index);
+	
 	if ((result = second_pass(clean_fp, hexcode, index, line_mapping)) != 0) {
 		printf("FATAL: Code Compilation failed with code %d\nExiting...\n", result);
 		return 1;
