@@ -41,7 +41,6 @@ int get_position(label_index* index, char* label) {
 		}
 	}
 	
-	printf("Unseen label: %s\n", label);
 	return -1;
 }
 

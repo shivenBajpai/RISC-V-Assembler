@@ -19,6 +19,7 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, managed_array* lin
 
 		switch (c) {
 			case '#':
+			case ';':
 				comment_flag = true;
 				break;
 
@@ -100,6 +101,38 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, managed_array*
 					case R_TYPE:
 						addend = R_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
 						break;
+
+					case I1_TYPE:
+						addend = I1_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break; 
+
+					case I2_TYPE:
+						addend = I2_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break; 
+
+					case S_TYPE:
+						addend = S_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break; 
+
+					case B_TYPE:
+						addend = B_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break; 
+
+					case U_TYPE:
+						addend = U_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break; 
+
+					case J_TYPE:
+						addend = J_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break; 
+
+					case I3_TYPE:
+						addend = I3_type_parser(&clean_fp, index, &line_mapping->values[instruction_count]);
+						break; 
+
+					case I4_TYPE:
+						break;
+						
 					default:
 						printf("Error on line %d\nUnclassified type, did you forget to write a case?\n", line_mapping->values[instruction_count]);
 						return 1;

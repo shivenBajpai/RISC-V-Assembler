@@ -1,23 +1,10 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
+#include "translator.h"
+#include <stdlib.h>
 #include "index.h"
 #include "hashmap.h"
-
-#define R_TYPE 0 
-#define I1_TYPE 1
-#define I2_TYPE 2
-#define S_TYPE 3
-#define B_TYPE 4
-#define U_TYPE 5
-#define J_TYPE 6
-#define I3_TYPE 7
-#define I4_TYPE 8
-
-typedef struct instruction_info {
-    const char* name;
-    int constant;
-    int handler_type;
-} instruction_info;
 
 typedef struct alias {
     const char* name;
@@ -142,6 +129,13 @@ const alias registers[] = {
     "t6", 31,
 };
 
+const char* argument_type_names[] = {
+    "Immediate Value",
+    "Offset/Flag",
+    "Register",
+    "Memory Address"
+}; 
+
 int search_register(char* name) {
     for (int i = 0; i<65; i++) {
         if (strcmp(name, registers[i].name) == 0) {
@@ -153,7 +147,7 @@ int search_register(char* name) {
 }
 
 const instruction_info* search_instruction(char* name) {
-    for (int i = 0; i<10; i++) {
+    for (int i = 0; i<42; i++) {
         if (strcmp(name, instructions[i].name) == 0) {
             return &instructions[i];
         }
@@ -162,14 +156,16 @@ const instruction_info* search_instruction(char* name) {
     return NULL;
 }
 
-long R_type_parser(FILE** args, label_index* labels, int* line_number) {
-    FILE* fp = *args;
+int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, int* line_number) {
+    FILE* fp = *fpp;
     int i = 0;
     int r = 0;
-    int result = 0;
-    char reg_name[3][8];
+    char* args = malloc(r*128*sizeof(char));
+    if (!args) {
+        printf("Out of memory!");
+        return NULL;
+    }
     char c;
-    const int register_offsets[] = {7,15,20};
 
     while ((c = fgetc(fp)) != EOF) {
         switch (c){
@@ -178,11 +174,12 @@ long R_type_parser(FILE** args, label_index* labels, int* line_number) {
                 break;
 
             case ',':
-                if (r==2) {
-                    printf("Error on line %d, Expected 3 operands, Found more\n", *line_number);
-                    return -1;
+                if (r==(n-1)) {
+                    printf("Error on line %d, Expected 3 operands, Found more than 3\n", *line_number);
+                    free(args);
+                    return NULL;
                 }
-                reg_name[r][i] = '\0';
+                args[r*128 + i] = '\0';
                 r++;
                 i = 0;
                 break;
@@ -192,32 +189,261 @@ long R_type_parser(FILE** args, label_index* labels, int* line_number) {
 
             default:
                 if (i==7) {
-                    printf("Error on line %d, Illegal operand: %s\n", *line_number, reg_name[r]);
-                    return -1;
+                    printf("Error on line %d, Illegal operand: %s\n", *line_number, args + r*128);
+                    free(args);
+                    return NULL;
                 }
-                reg_name[r][i++] = c;
+                args[r*128 + i++] = c;
         }
     }
 
-exit:
-    if (r<2) {
+    exit:
+    if (r<(n-1)) {
         printf("Error on line %d, Expected 3 operands, Less operands than expected\n", *line_number);
+        free(args);
+        return NULL;
+    }
+    args[r*128 + i] = '\0';
+    int* converted_args = malloc(sizeof(unsigned long)*(types[r-1]==I2_TYPE || types[r-1]==S_TYPE)?(n+1):n);
+    if (!converted_args) {
+        printf("Out of memory!");
+        free(args);
+        return NULL;
+    }
+
+    for (r=0; r<n; r++) {
+        char* arg = args + r*128;
+        printf("Arg %d: %s", r, arg);
+        switch (types[r]) {
+            case IMMEDIATE:
+
+                char *endptr;
+                
+                if (args[0] == '0' && args[1] == 'x') {
+                    converted_args[r] = strtol(arg, &endptr, 16);    
+                } else if (args[0] == '0' && args[1] == 'o') {
+                    converted_args[r] = strtol(arg, &endptr, 8);
+                } else if (args[0] == '0' && args[1] == 'b') {
+                    converted_args[r] = strtol(arg, &endptr, 2);
+                } else {
+                    converted_args[r] = strtol(arg, &endptr, 10);
+                }
+
+                if (endptr == arg || *endptr != '\0') {
+                    printf("Argument %d on line %d is invalid for type %s: %s\n", r, *line_number, argument_type_names[types[r]], arg);
+                    free(args);
+                    return NULL;
+                }
+
+                break;
+
+            case OFFSET:
+
+                if (isalpha(arg[0])) {
+                    char *endptr;
+                    converted_args[r] = strtol(arg, &endptr, 10);
+
+                    if (endptr == arg || *endptr != '\0') {
+                        printf("Failed to interpret argument %d on line %d as numeric offset: %s\n", r, *line_number, arg);
+                        free(args);
+                        free(converted_args);
+                        return NULL;
+                    }
+
+                } else {
+                    int position = get_position(labels, arg);
+
+                    if (position==-1) {
+                        printf("Unseen label on line %d: %s\n", *line_number, arg);
+                        free(args);
+                        free(converted_args);
+                        return NULL;
+                    }
+
+                    converted_args[r] = position - *line_number;
+                }
+
+                break;
+
+            case REGISTER:
+                converted_args[r] = search_register(arg);
+
+                if (converted_args[r]==-1) {
+                    printf("Unseen label on line %d: %s\n", *line_number, arg);
+                    free(args);
+                    free(converted_args);
+                    return NULL;
+                }
+                
+                break;
+
+            case ADDRESS:
+                
+                break;
+
+            default:
+                printf("Error on line %d\nUnknown argument type %d for %s, did you forget to write a case?\n", *line_number, types[r], args + r*128);
+				return NULL;
+        }
+        printf(" --> %d\n",converted_args[r]);
+    }
+
+    free(args);
+    return converted_args;
+}
+
+// long R_type_parser(FILE** args, label_index* labels, int* line_number) {
+//     FILE* fp = *args;
+//     int i = 0;
+//     int r = 0;
+//     int result = 0;
+//     char reg_name[3][8];
+//     char c;
+//     const int register_offsets[] = {7,15,20};
+
+//     while ((c = fgetc(fp)) != EOF) {
+//         switch (c){
+//             case ' ':
+//             case '\t':
+//                 break;
+
+//             case ',':
+//                 if (r==2) {
+//                     printf("Error on line %d, Expected 3 operands, Found more than 3\n", *line_number);
+//                     return -1;
+//                 }
+//                 reg_name[r][i] = '\0';
+//                 r++;
+//                 i = 0;
+//                 break;
+
+//             case '\n':
+//                 goto exit;
+
+//             default:
+//                 if (i==7) {
+//                     printf("Error on line %d, Illegal operand: %s\n", *line_number, reg_name[r]);
+//                     return -1;
+//                 }
+//                 reg_name[r][i++] = c;
+//         }
+//     }
+
+// exit:
+//     if (r<2) {
+//         printf("Error on line %d, Expected 3 operands, Less operands than expected\n", *line_number);
+//         return -1;
+//     }
+//     reg_name[r][i] = '\0';
+
+//     for (r=0; r<3; r++) {
+//         int addr = search_register(reg_name[r]);
+//         if (addr!=-1) result += addr << register_offsets[r];
+//         else {
+//             printf("Error on line %d, Unknown alias: %s\n", *line_number, reg_name[r]);
+//             return -1;
+//         }
+//     }
+
+//     return result;
+// }
+
+long R_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    argument_type types[] = {REGISTER, REGISTER, REGISTER};
+    int* args = args_parser(args_raw, labels, 3, types, line_number);
+
+    if (!args) {
         return -1;
     }
-    reg_name[r][i] = '\0';
 
-    for (r=0; r<3; r++) {
-        int addr = search_register(reg_name[r]);
-        if (addr!=-1) result += addr << register_offsets[r];
-        else {
-            printf("Error on line %d, Unknown alias: %s", *line_number, reg_name[r]);
-            return -1;
-        }
-    }
+    int result = (args[0] << 7) + (args[1] << 15) + (args[2] << 20);
 
+    free(args);
     return result;
 }
 
+long I1_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    argument_type types[] = {REGISTER, REGISTER, IMMEDIATE};
+    int* args = args_parser(args_raw, labels, 3, types, line_number);
+
+    if (!args) {
+        return -1;
+    }
+
+    if (args[2] >= 4096) {
+        printf("Warning on line %d: Immediate value cannot exceed 12 bits. Some data will be lost...", *line_number);
+    }
+
+    int result = (args[0] << 7) + (args[1] << 15) + (args[2] << 20);
+    free(args);
+    return result;
+}
+
+long I2_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    //TODO
+}
+
+long S_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    //TODO
+}
+
+long B_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    argument_type types[] = {REGISTER, REGISTER, OFFSET};
+    int* args = args_parser(args_raw, labels, 3, types, line_number);
+
+    if (!args) {
+        return -1;
+    }
+
+    int rearranged_offset = ((args[2] & 0x0000001E) << 7) + ((args[1] & 0x00000400) >> 4) + ((args[1] & 0x00000800) << 19) + ((args[1] & 0x000007E0) << 20);
+    int result = (args[0] << 15) + (args[1] << 20) + rearranged_offset;
+
+    free(args);
+    return result;
+}
+
+long U_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    argument_type types[] = {REGISTER, IMMEDIATE};
+    int* args = args_parser(args_raw, labels, 2, types, line_number);
+
+    if (!args) {
+        return -1;
+    }
+
+    int result = (args[0] << 7) + (args[1] & (0xFFFFF000));
+
+    free(args);
+    return result;
+}
+
+long J_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    argument_type types[] = {REGISTER, IMMEDIATE};
+    int* args = args_parser(args_raw, labels, 2, types, line_number);
+
+    if (!args) {
+        return -1;
+    }
+
+    int result = (args[0] << 7) + (args[1] & (0xFFFFF000));
+
+    free(args);
+    return result;
+}
+
+long I3_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
+    argument_type types[] = {REGISTER, OFFSET};
+    int* args = args_parser(args_raw, labels, 2, types, line_number);
+
+    if (!args) {
+        return -1;
+    }
+
+    int rearranged_offset = (args[1] & 0x000FF000) + ((args[1] & 0x000007FE) << 20) + ((args[1] & 0x00000400) << 9) + ((args[1] & 0x00080000) << 11);
+    int result = (args[0] << 7) + rearranged_offset;
+
+    free(args);
+    return result;
+}
 
 
 // Converts one instruction into Binary
