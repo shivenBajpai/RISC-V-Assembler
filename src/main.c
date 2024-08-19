@@ -5,6 +5,7 @@
 
 int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, managed_array* line_mapping) {
 	char c;
+	char label_buffer[128];
 	int linecount = 1;
 	int instruction = 0;
 	int line_len = 0;
@@ -13,7 +14,6 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, managed_array* lin
 	bool whitespace_flag = false;
 	bool cw_flag = false;
 	bool instr_flag = false;
-	char label_buffer[128];
 
 	while ((c = fgetc(in_fp)) != EOF) {
 
@@ -182,7 +182,7 @@ int main(void) {
 
 	int hexcode[line_mapping->len];
 
-	// debug_print_label_index(index);
+	// debug_print_label_index(index); // Uncomment This line to get a list of all labels and corresponding instruction numbers in output
 	
 	if ((result = second_pass(clean_fp, hexcode, index, line_mapping)) != 0) {
 		printf("FATAL: Code Compilation failed with code %d\nExiting...\n", result);

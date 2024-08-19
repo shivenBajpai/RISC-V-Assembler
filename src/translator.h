@@ -3,7 +3,6 @@
 
 #include <stdbool.h>
 #include "index.h"
-#include "hashmap.h"
 
 typedef struct instruction_info {
     const char* name;
@@ -26,8 +25,7 @@ typedef enum instruction_type {
 typedef enum argument_type {
     IMMEDIATE,
     OFFSET,
-    REGISTER,
-    ADDRESS,
+    REGISTER
 } argument_type;
 
 long R_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
