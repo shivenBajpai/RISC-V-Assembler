@@ -174,6 +174,7 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
                 break;
 
             case ',':
+            case'(':
                 if (r==(n-1)) {
                     printf("Error on line %d, Expected 3 operands, Found more than 3\n", *line_number);
                     free(args);
@@ -184,6 +185,8 @@ int* args_parser(FILE** fpp, label_index* labels, int n, argument_type* types, i
                 i = 0;
                 break;
 
+            case ')':
+                fp++;
             case '\n':
                 goto exit;
 
@@ -380,11 +383,38 @@ long I1_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
 }
 
 long I2_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
-    //TODO
+    argument_type types[] = {REGISTER, IMMEDIATE, REGISTER};
+    int* args = args_parser(args_raw, labels, 3, types, line_number);
+
+    if (!args) {
+        return -1;
+    }
+
+    if (args[1] >= 4096) {
+        printf("Warning on line %d: Immediate value cannot exceed 12 bits. Some data will be lost...", *line_number);
+    }
+
+    int result = (args[0] << 7) + (args[2] << 15) + (args[1] << 20);
+    free(args);
+    return result;
 }
 
 long S_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
-    //TODO
+    argument_type types[] = {REGISTER, IMMEDIATE, REGISTER};
+    int* args = args_parser(args_raw, labels, 3, types, line_number);
+
+    if (!args) {
+        return -1;
+    }
+
+    if (args[1] >= 4096) {
+        printf("Warning on line %d: Immediate value cannot exceed 12 bits. Some data will be lost...", *line_number);
+    }
+
+    int rearranged_immediate = ((args[1] & 0x0000001F) << 7) + ((args[1] & 0x00000FE0) << 20);
+    int result = (args[0] << 15) + rearranged_immediate + (args[1] << 20);
+    free(args);
+    return result;
 }
 
 long B_type_parser(FILE** args_raw, label_index* labels, int* line_number) {
