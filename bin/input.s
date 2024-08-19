@@ -3,7 +3,7 @@
     # Expected answers: 0, 0, 2, 0, 1
     # The following line initializes register x3 with 0x10000000 
     # so that you can use x3 for referencing various memory locations. 
-    lui x3, 0x10000000
+    lui x3, 0x10000
     #your code starts here
     
     # Using x1 for storing jump addresses

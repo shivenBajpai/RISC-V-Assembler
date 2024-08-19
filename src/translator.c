@@ -157,12 +157,13 @@ int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, in
     FILE* fp = *fpp;
     int i = 0;
     int r = 0;
+    char c;
+
     char* args = malloc(r*128*sizeof(char));
     if (!args) {
         printf("Out of memory!");
         return NULL;
     }
-    char c;
 
     while ((c = fgetc(fp)) != EOF) {
         switch (c){
@@ -188,7 +189,7 @@ int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, in
                 goto exit;
 
             default:
-                if (i==126) {
+                if (i==127) {
                     args[r*128 + i] = '\0';
                     printf("Error on line %d, Illegal operand: %s\n", *line_number, args + r*128);
                     free(args);
@@ -382,7 +383,7 @@ long U_type_parser(FILE** args_raw, label_index* labels, int* line_number, int i
         return -1;
     }
 
-    int result = (args[0] << 7) + (args[1] & (0xFFFFF000));
+    int result = (args[0] << 7) + (args[1] << 12);
 
     free(args);
     return result;
