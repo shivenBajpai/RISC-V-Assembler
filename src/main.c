@@ -15,15 +15,18 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, Vec* line_mapping)
 	bool whitespace_flag = false;
 	bool cw_flag = false;
 	bool instr_flag = false;
+	bool keep_reading = true;
 
-	while ((c = fgetc(in_fp)) != EOF) {
-
+	while (keep_reading) {
+		c = fgetc(in_fp);
 		switch (c) {
 			case '#':
 			case ';':
 				comment_flag = true;
 				break;
 
+			case EOF:
+				keep_reading = false;
 			case '\n':
 				if (instr_flag) {
 					fputc('\n', out_fp);
@@ -69,7 +72,6 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, Vec* line_mapping)
 		}
 		whitespace_flag = false;
 	}
-	fputc('\n', out_fp);
 	return 0;
 }
 
@@ -198,6 +200,7 @@ int main(void) {
 	}
 
 	fwrite(hexcode, 4, (line_mapping->len), output_fp);
+	printf("Wrote %d words to file", line_mapping->len);
 	fclose(output_fp);
 	fclose(clean_fp);
 
