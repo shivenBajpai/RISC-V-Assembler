@@ -47,6 +47,7 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, Vec* line_mapping)
 					add_label(index, label_buffer, instruction);
 					fseek(out_fp, -line_len, SEEK_CUR);
 					instr_flag = false;
+					lw_flag = true;
 				}
 				break;
 
@@ -68,7 +69,7 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, Vec* line_mapping)
 		}
 		whitespace_flag = false;
 	}
-
+	fputc('\n', out_fp);
 	return 0;
 }
 
@@ -139,7 +140,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, Vec* line_mapp
 				
 				if (fail_flag) return 1;
 				hexcode[instruction_count] = instruction->constant + (unsigned int) addend;
-				//printf("Wrote instruction %d: %d\n", instruction_count, hexcode[instruction_count]);
+				printf("Wrote instruction %d: %d\n", instruction_count, hexcode[instruction_count]);
 				instruction_count++;
 				i = 0;
 			} else name[i++] = c;
@@ -183,7 +184,7 @@ int main(void) {
 
 	int hexcode[line_mapping->len];
 
-	// debug_print_label_index(index); // Uncomment This line to get a list of all labels and corresponding instruction numbers in output
+	debug_print_label_index(index); // Uncomment This line to get a list of all labels and corresponding instruction numbers in output
 	
 	if ((result = second_pass(clean_fp, hexcode, index, line_mapping)) != 0) {
 		printf("FATAL: Code Compilation failed with code %d\nExiting...\n", result);

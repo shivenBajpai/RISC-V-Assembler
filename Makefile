@@ -29,6 +29,10 @@ $(TARGET_PATH): $(OBJS)
 	@echo "Compiling $<..."
 	@$(CC) $(CCFLAGS) -c $< -o $@
 
+.PHONY: report
+report:
+	@cd report && ./run.sh
+
 .PHONY: clean
 clean:
 	@echo "Removing Build files..."
