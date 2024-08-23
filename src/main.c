@@ -139,7 +139,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, Vec* line_mapp
 				
 				if (fail_flag) return 1;
 				hexcode[instruction_count] = instruction->constant + (unsigned int) addend;
-				printf("Wrote instruction %d: %d\n", instruction_count, hexcode[instruction_count]);
+				//printf("Wrote instruction %d: %d\n", instruction_count, hexcode[instruction_count]);
 				instruction_count++;
 				i = 0;
 			} else name[i++] = c;
