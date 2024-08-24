@@ -64,7 +64,8 @@
 	\newpage
 
 	\section{Preface}
-	This Report outlines the process of creation of this Assembler. The aim was to have it work with all base class instructions, however pseudo instructions were left out. There is however a section at the end briefly detailing how one may add pseudo instructions to this assembler.
+	This Report outlines the process of creation of this Assembler. The aim was to have it work with all base class instructions and was designed such that it would be used for a GUI based RISCV simulator in the future. 
+	Pseudo instructions were left out of this assembler. There is however a section at the end briefly detailing how one may add pseudo instructions to this assembler.
 
 	\section{Breaking down the problem}
 	At its core, parsing assembly instructions involves 3 simple steps:\\
@@ -75,10 +76,9 @@
 		\item{Write the binary code to the output file/buffer\\\\}
 	\end{enumerate}
 
-	Since every instruction is processed sequentially, The entire process looks as thought it can be implemented in a single loop. However it is not so. Say there is a jump or branch instruction with a Label that is declared on a later line, if we are reading and converting line by line, we wouldn't have reached that label yet and thus wont be able to convert the current instruction to binary.\\
+	Since every instruction is processed sequentially, The entire process looks as though it can be implemented in a single loop. However it is not so. Say there is a jump or branch instruction with a label that is declared on a later line, if we are reading and converting line by line, we wouldn't have reached that label yet and thus wont be able to convert the current instruction to binary.\\
 	To solve this issue we use two passes. The first pass looks for Labels and notes down the address to which each label points. Then in the second pass we actually convert the instructions, which can be now be down without any issues since we already know the position of all labels in the code.\\
 	For convenience, we also remove excess whitespace in the first pass.\\\\
-
 
 	Theoretically this could be also be done in a single pass by deferring the conversion of all jump/branch statements to the end of the pass. However my assembler goes with two passes for simplicity\\
 	The rough control flow can be written as follows:\\
@@ -88,42 +88,57 @@
 		
 		\item{Read every line, for every line \begin{enumerate} 
 			\item{If there is a flag declared, note down the flag's position}
-			\item{Remove whitespace/flags and write it to a temporary buffer}
+			\item{Remove whitespace/flags and write it to a temporary file `cleaned.s'}
 			\end{enumerate}}
 
-		\item{Write this temporary cleaned up code to a file `cleaned.s'}
-
-		\item{Read every line from the temporary buffer, for every line\begin{enumerate} 
+		\item{Read every line from the temporary file, for every line\begin{enumerate} 
 			\item{Read the name of the instruction}
 			\item{If the instruction is invalid, exit gracefully}
 			\item{Based on the instruction, try to read the arguments and check for validity}
 			\item{If the arguments are invalid, exit gracefully}
-			\item{Convert to binary and write to another temporary buffer}
+			\item{Convert to binary and write to a temporary buffer}
 			\end{enumerate}}
 
-		\item{Write the full binary code from the second temporary buffer to the output file `out.hex'}
-	\end{enumerate}\\
+		\item{Write the full binary code from the temporary buffer to the output file `out.hex'\\}
+	\end{enumerate}
 
+	Although it is not necessary to write the intermediate output of pass 1 to a file instead of just a buffer for the objective of this program, it is included since the assembler is designed with the intention of being integrated with a GUI simulator for the next project of this course so having a cleaned up version of the code would be useful for then.
+	The temporary buffer between the second pass and final writing to binary is to avoid a scenario where an incomplete binary is produced as a result of a program being partially assembled and then having the assembler encounter an error causing it to stop and leave behind a binary with unpredictable contents.
 
 	\section{Code Implementation}
 
-		This section only touches on the parts key to assembly to binary conversion, and leaves out mundane details like file handling and the fine details of memory management.
+		This section only touches on the parts key to assembly to binary conversion, and leaves out mundane details like file handling and the fine details of memory management.\\
+		For simplifying the code, 2 data structures have been defined \verb|vec| and \verb|label_index|. vec is essentially a glorified array that handles expanding its memory allocation on its own. \verb|label_index| is a collection of label-position pairs that are later searched when trying to resolve labels during the second pass
 
 		\subsection{The First Pass}
 
-			\subsubsection{Storing Label positions}
-
-
+			In this pass the code goes through the input charachter by charachter. A series of different flags are used to keep track of state.
+			We essentially just remove excess whitespace and copy the rest to the output buffer. If a colon is encountered, the program discards the text from the current line before the colon, treating it as a label and noting down its position in a \verb|label_index|.
+			Additionally, the program builds up an array of the line number on which each instruction was written, this helps it know which line number to report in an error message if an error is encountered in the second pass, since the line number of an instruction in the output of the first pass may be different from the line number in the input due to removal of whitespace
+				
 		\subsection{The Second Pass}
 
-			\subsubsection{Parsing the instruction}
+			\subsubsection{Parsing the instruction} \label{instruction_parse}
+			Thanks to handling unnecessary whitespace in the first pass, to read an instruction the second pass can simply keep reading chars into a buffer until it encounters a space.
+			The program then tries to look-up information about this instruction in the list of instruction it has. If it does not find a matching instruction, it gives an error and exits.unpredictable
+			If the program finds a matching instruction, It is able to look-up information regarding the encoding format of the instruction, the format of the arguments as well as the constant parts of the instruction's enconding (opcode, funct3, funct7 etc.)
 
 			\subsubsection{Parsing the arguments}
+			On performing the lookup the program gets a value of type \verb|enum instruction_type|'. This is matched in a switch-case block and a parser function for that format of arguments is called.
+			This function just calls another generalized argument parser with the right parameters, performs any extra validation if applicable (like 12-bit limit for immediate values of many instructions)
+			And then it encodes the arguments as per the format and returns that as a long int.
 
 			\subsubsection{Calculating binary}
+			The encoded arguments from the parser function is just combined with the constant part from looking up the instruction in section \ref{instruction_parse}. The two numbers contain different parts of the full encoded instruction and are combind with a bitwise OR operation.
+			After this the program writes the output to a buffer that holds the output until all instrutions have been encoded.
+
+			\subsection{A Note On Logistics}
+			A lot of function calls occur during this pass. For the sake of efficiency, instead of creating buffers to send the arguments to the argument parsing functions, we pass a pointer to the file pointer reading the intermediate `cleaned.s' file. The argument parser simply increments the file pointer as it reads the arguments. When the function returns, the pointer ends up at the next line ready for the next iteration of the loop to attempt to read another instruction.
 
 
 	\section{Testing}
+
+	\section{Adding Pseudo Instructions}
 	
 
 \end{document}
