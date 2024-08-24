@@ -1,4 +1,5 @@
 /bin/cleaned.s
+/bin/output.hex
 *.o
 riscv_asm
 /.vscode/
