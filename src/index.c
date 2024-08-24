@@ -34,7 +34,7 @@ int add_label(label_index* index, char* in_label, int position) {
 	return 0;
 }
 
-int get_position(label_index* index, char* label) {
+int label_to_position(label_index* index, char* label) {
 	for(int i=0; i<index->len; i++) {
 		if (strcmp(index->labels[i], label) == 0) {
 			return index->positions[i];

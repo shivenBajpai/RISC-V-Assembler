@@ -37,6 +37,6 @@ long U_type_parser(FILE** args_raw, label_index* labels, int* line_number, int i
 long J_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
 long I3_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
 
-int search_register(char* name);
-const instruction_info* search_instruction(char* name);
+int parse_alias(char* name);
+const instruction_info* parse_instruction(char* name);
 #endif

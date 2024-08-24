@@ -9,12 +9,12 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, vec* line_mapping)
 	char c;
 	char label_buffer[128];
 	int linecount = 1;
-	int instruction = 0;
+	int instruction_count = 0;
 	int line_len = 0;
 	bool comment_flag = false;
 	bool lw_flag = true;
-	bool whitespace_flag = false;
 	bool cw_flag = false;
+	bool whitespace_flag = false;
 	bool instr_flag = false;
 	bool keep_reading = true;
 
@@ -32,7 +32,7 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, vec* line_mapping)
 				if (instr_flag) {
 					fputc('\n', out_fp);
 					append(line_mapping, linecount);
-					instruction += 1;
+					instruction_count += 1;
 				} 
 				linecount += 1;
 				line_len = 0;
@@ -48,7 +48,7 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, vec* line_mapping)
 				if (line_len >= 128) printf("ERROR: Label too long on line %d, Stopping...\n", linecount);
 				else {	
 					label_buffer[line_len] = '\0';
-					add_label(index, label_buffer, instruction);
+					add_label(index, label_buffer, instruction_count);
 					fseek(out_fp, -line_len, SEEK_CUR);
 					instr_flag = false;
 					lw_flag = true;
@@ -90,7 +90,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 
 				// Attempt instruction translation
 				
-				const instruction_info* instruction = search_instruction(name);
+				const instruction_info* instruction = parse_instruction(name);
 
 				if (!instruction) {
 					printf("Error on line %d\nUnknown Instruction: %s\n                     ^^^^^^^^\n", line_mapping->values[instruction_count], name);
@@ -142,10 +142,13 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 				}
 				
 				if (fail_flag) return 1;
-				hexcode[instruction_count] = instruction->constant + (unsigned int) addend;
+
+				hexcode[instruction_count] = instruction->constant + addend;
 				if (debug) printf("Instruction %d: %08X\n", instruction_count, hexcode[instruction_count]);
+				
 				instruction_count++;
 				i = 0;
+
 			} else name[i++] = c;
 		} else {
 			name[7] = '\0';

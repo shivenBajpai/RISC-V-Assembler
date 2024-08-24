@@ -133,7 +133,7 @@ const char* argument_type_names[] = {
     "Register"
 }; 
 
-int search_register(char* name) {
+int parse_alias(char* name) {
     for (int i = 0; i<65; i++) {
         if (strcmp(name, registers[i].name) == 0) {
             return registers[i].value;
@@ -143,7 +143,7 @@ int search_register(char* name) {
     return -1;
 }
 
-const instruction_info* search_instruction(char* name) {
+const instruction_info* parse_instruction(char* name) {
     for (int i = 0; i<42; i++) {
         if (strcmp(name, instructions[i].name) == 0) {
             return &instructions[i];
@@ -153,13 +153,13 @@ const instruction_info* search_instruction(char* name) {
     return NULL;
 }
 
-int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, int* line_number, int instruction_number) {
+int* parse_args(FILE** fpp, label_index* labels, int n_args, argument_type* types, int* line_number, int instruction_number) {
     FILE* fp = *fpp;
-    int i = 0;
-    int r = 0;
+    int i_args = 0;
+    int current_arg = 0;
     char c;
 
-    char* args = malloc(r*128*sizeof(char));
+    char* args = malloc(current_arg*128*sizeof(char));
     if (!args) {
         printf("Out of memory!");
         return NULL;
@@ -173,14 +173,14 @@ int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, in
 
             case ',':
             case'(':
-                if (r==(n-1)) {
+                if (current_arg==(n_args-1)) {
                     printf("Error on line %d, Expected 3 operands, Found more than 3\n", *line_number);
                     free(args);
                     return NULL;
                 }
-                args[r*128 + i] = '\0';
-                r++;
-                i = 0;
+                args[current_arg*128 + i_args] = '\0';
+                current_arg++;
+                i_args = 0;
                 break;
 
             case ')':
@@ -189,49 +189,49 @@ int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, in
                 goto exit;
 
             default:
-                if (i==127) {
-                    args[r*128 + i] = '\0';
-                    printf("Error on line %d, Illegal operand: %s\n", *line_number, args + r*128);
+                if (i_args==127) {
+                    args[current_arg*128 + i_args] = '\0';
+                    printf("Error on line %d, Illegal operand: %s\n", *line_number, args + current_arg*128);
                     free(args);
                     return NULL;
                 }
-                args[r*128 + i++] = c;
+                args[current_arg*128 + i_args++] = c;
         }
     }
 
     exit:
-    if (r<(n-1)) {
+    if (current_arg<(n_args-1)) {
         printf("Error on line %d, Expected 3 operands, Less operands than expected\n", *line_number);
         free(args);
         return NULL;
     }
-    args[r*128 + i] = '\0';
-    int* converted_args = malloc(sizeof(unsigned long)*n);
+    args[current_arg*128 + i_args] = '\0';
+    int* converted_args = malloc(sizeof(unsigned long)*n_args);
     if (!converted_args) {
         printf("Out of memory!");
         free(args);
         return NULL;
     }
 
-    for (r=0; r<n; r++) {
-        char* arg = args + r*128;
+    for (current_arg=0; current_arg<n_args; current_arg++) {
+        char* arg = args + current_arg*128;
 
-        switch (types[r]) {
+        switch (types[current_arg]) {
             case IMMEDIATE:
 
                 char *endptr;
                 if (arg[0] == '0' && arg[1] == 'x') {
-                    converted_args[r] = strtol(arg+2, &endptr, 16);    
+                    converted_args[current_arg] = strtol(arg+2, &endptr, 16);    
                 } else if (arg[0] == '0' && arg[1] == 'o') {
-                    converted_args[r] = strtol(arg+2, &endptr, 8);
+                    converted_args[current_arg] = strtol(arg+2, &endptr, 8);
                 } else if (arg[0] == '0' && arg[1] == 'b') {
-                    converted_args[r] = strtol(arg+2, &endptr, 2);
+                    converted_args[current_arg] = strtol(arg+2, &endptr, 2);
                 } else {
-                    converted_args[r] = strtol(arg, &endptr, 10);
+                    converted_args[current_arg] = strtol(arg, &endptr, 10);
                 }
 
                 if (endptr == arg || *endptr != '\0') {
-                    printf("Argument %d on line %d is invalid for type %s: %s\n", r, *line_number, argument_type_names[types[r]], arg);
+                    printf("Argument %d on line %d is invalid for type %s: %s\n", current_arg, *line_number, argument_type_names[types[current_arg]], arg);
                     free(args);
                     return NULL;
                 }
@@ -242,17 +242,17 @@ int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, in
 
                 if (!isalpha(arg[0])) {
                     char *endptr;
-                    converted_args[r] = strtol(arg, &endptr, 10);
+                    converted_args[current_arg] = strtol(arg, &endptr, 10);
 
                     if (endptr == arg || *endptr != '\0') {
-                        printf("Failed to interpret argument %d on line %d as numeric offset: %s\n", r, *line_number, arg);
+                        printf("Failed to interpret argument %d on line %d as numeric offset: %s\n", current_arg, *line_number, arg);
                         free(args);
                         free(converted_args);
                         return NULL;
                     }
 
                 } else {
-                    int position = get_position(labels, arg);
+                    int position = label_to_position(labels, arg);
 
                     if (position==-1) {
                         printf("Unseen label on line %d: %s\n", *line_number, arg);
@@ -261,15 +261,15 @@ int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, in
                         return NULL;
                     }
 
-                    converted_args[r] = (position - instruction_number)*4;
+                    converted_args[current_arg] = (position - instruction_number)*4;
                 }
 
                 break;
 
             case REGISTER:
-                converted_args[r] = search_register(arg);
+                converted_args[current_arg] = parse_alias(arg);
 
-                if (converted_args[r]==-1) {
+                if (converted_args[current_arg]==-1) {
                     printf("Unseen label on line %d: %s\n", *line_number, arg);
                     free(args);
                     free(converted_args);
@@ -279,7 +279,7 @@ int* parse_args(FILE** fpp, label_index* labels, int n, argument_type* types, in
                 break;
 
             default:
-                printf("Error on line %d\nUnknown argument type %d for %s, did you forget to write a case?\n", *line_number, types[r], args + r*128);
+                printf("Error on line %d\nUnknown argument type %d for %s, did you forget to write a case?\n", *line_number, types[current_arg], args + current_arg*128);
 				return NULL;
         }
     }

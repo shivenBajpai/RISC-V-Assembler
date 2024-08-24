@@ -6,7 +6,7 @@ typedef struct label_index label_index;
 
 int add_label(label_index* index, char* label, int position);
 
-int get_position(label_index* index, char* label);
+int label_to_position(label_index* index, char* label);
 
 label_index* new_label_index();
 
