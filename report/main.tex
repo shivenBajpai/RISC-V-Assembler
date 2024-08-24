@@ -59,7 +59,71 @@
 	\renewcommand{\thefigure}{\theenumi}
 	\renewcommand{\thetable}{\theenumi}
 
-	
+	\tableofcontents
+
+	\newpage
+
+	\section{Preface}
+	This Report outlines the process of creation of this Assembler. The aim was to have it work with all base class instructions, however pseudo instructions were left out. There is however a section at the end briefly detailing how one may add pseudo instructions to this assembler.
+
+	\section{Breaking down the problem}
+	At its core, parsing assembly instructions involves 3 simple steps:\\
+
+	\begin{enumerate}
+		\item{Read the instruction}
+		\item{Convert it to binary}
+		\item{Write the binary code to the output file/buffer\\\\}
+	\end{enumerate}
+
+	Since every instruction is processed sequentially, The entire process looks as thought it can be implemented in a single loop. However it is not so. Say there is a jump or branch instruction with a Label that is declared on a later line, if we are reading and converting line by line, we wouldn't have reached that label yet and thus wont be able to convert the current instruction to binary.\\
+	To solve this issue we use two passes. The first pass looks for Labels and notes down the address to which each label points. Then in the second pass we actually convert the instructions, which can be now be down without any issues since we already know the position of all labels in the code.\\
+	For convenience, we also remove excess whitespace in the first pass.\\\\
+
+
+	Theoretically this could be also be done in a single pass by deferring the conversion of all jump/branch statements to the end of the pass. However my assembler goes with two passes for simplicity\\
+	The rough control flow can be written as follows:\\
+
+	\begin{enumerate}
+		\item{Load the file}
+		
+		\item{Read every line, for every line \begin{enumerate} 
+			\item{If there is a flag declared, note down the flag's position}
+			\item{Remove whitespace/flags and write it to a temporary buffer}
+			\end{enumerate}}
+
+		\item{Write this temporary cleaned up code to a file `cleaned.s'}
+
+		\item{Read every line from the temporary buffer, for every line\begin{enumerate} 
+			\item{Read the name of the instruction}
+			\item{If the instruction is invalid, exit gracefully}
+			\item{Based on the instruction, try to read the arguments and check for validity}
+			\item{If the arguments are invalid, exit gracefully}
+			\item{Convert to binary and write to another temporary buffer}
+			\end{enumerate}}
+
+		\item{Write the full binary code from the second temporary buffer to the output file `out.hex'}
+	\end{enumerate}\\
+
+
+	\section{Code Implementation}
+
+		This section only touches on the parts key to assembly to binary conversion, and leaves out mundane details like file handling and the fine details of memory management.
+
+		\subsection{The First Pass}
+
+			\subsubsection{Storing Label positions}
+
+
+		\subsection{The Second Pass}
+
+			\subsubsection{Parsing the instruction}
+
+			\subsubsection{Parsing the arguments}
+
+			\subsubsection{Calculating binary}
+
+
+	\section{Testing}
 	
 
 \end{document}

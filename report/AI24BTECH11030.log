@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2024.8.8)  23 AUG 2024 19:42
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2024.8.8)  24 AUG 2024 20:35
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1256,28 +1256,75 @@ Package hyperref Info: Link coloring OFF on input line 49.
 \@outlinefile=\write5
 \openout5 = `AI24BTECH11030.out'.
 
+ (./AI24BTECH11030.toc)
+\tf@toc=\write6
+\openout6 = `AI24BTECH11030.toc'.
+
  [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf
--dist/fonts/enc/dvips/base/8r.enc}] (./AI24BTECH11030.aux)
+-dist/fonts/enc/dvips/base/8r.enc}]
+Underfull \hbox (badness 10000) in paragraph at lines 70--71
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--76
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 75--76
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--81
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 78--81
+
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 83--85
+
+ []
+
+
+! LaTeX Error: There's no line here to end.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.104 
+      
+? 
+[2] (./AI24BTECH11030.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2020/03/25>
  ***********
 Package rerunfilecheck Info: File `AI24BTECH11030.out' has not changed.
-(rerunfilecheck)             Checksum: D41D8CD98F00B204E9800998ECF8427E;0.
+(rerunfilecheck)             Checksum: AAED8179EE7956DC9FA7782CB3EFB051;621.
  ) 
 Here is how much of TeX's memory you used:
- 30146 strings out of 474222
- 591142 string characters out of 5748734
- 1924975 words of memory out of 5000000
- 51777 multiletter control sequences out of 15000+600000
- 602544 words of font info for 114 fonts, out of 8000000 for 9000
+ 30194 strings out of 474222
+ 591652 string characters out of 5748734
+ 1933975 words of memory out of 5000000
+ 51795 multiletter control sequences out of 15000+600000
+ 606264 words of font info for 120 fonts, out of 8000000 for 9000
  1144 hyphenation exceptions out of 8191
- 101i,6n,103p,1172b,437s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb>
-Output written on AI24BTECH11030.pdf (1 page, 14483 bytes).
+ 101i,6n,103p,1172b,439s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texlive/texmf-dist/fonts/type1/public/txfonts/rtxr.pfb></usr/shar
+e/texlive/texmf-dist/fonts/type1/public/txfonts/rtxsc.pfb></usr/share/texlive/t
+exmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts
+/type1/urw/times/utmr8a.pfb>
+Output written on AI24BTECH11030.pdf (2 pages, 39238 bytes).
 PDF statistics:
- 22 PDF objects out of 1000 (max. 8388607)
- 16 compressed objects within 1 object stream
- 2 named destinations out of 1000 (max. 500000)
- 13 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 86 PDF objects out of 1000 (max. 8388607)
+ 73 compressed objects within 1 object stream
+ 23 named destinations out of 1000 (max. 500000)
+ 53 words of extra memory for PDF output out of 10000 (max. 10000000)
 

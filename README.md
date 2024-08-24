@@ -7,4 +7,7 @@ This is a RISC-V Assembler written to be RV64I Capable for a college project (CS
 2) Copy the input assembly code to a file called input.s in the same directory as the binary
 3) Run the binary. A temporary file called `clean.s` will be created and the machine code output shall be in `output.hex`. Both in the same directory
 
+# Command line switches
+`-d` - Runs the assembler in debug mode, providing more verbose output as it runss
+
 A more detailed report on the design and features of this assembler is present in `report.pdf` at the root of this project
