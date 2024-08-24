@@ -2,18 +2,18 @@
 #define VEC_H
 #include <stdlib.h>
 
-typedef struct Vec {
+typedef struct vec {
 	size_t len;
 	size_t capacity;
 	int* values;
-} Vec;
+} vec;
 
-int append(Vec* array, int value);
+int append(vec* array, int value);
 
-Vec* new_managed_array();
+vec* new_managed_array();
 
-void free_managed_array(Vec* array);
+void free_managed_array(vec* array);
 
-void print_array(Vec* index);
+void print_array(vec* index);
 
 #endif

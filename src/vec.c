@@ -1,14 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-typedef struct Vec {
+typedef struct vec {
 	size_t len;
 	size_t capacity;
 	int* values;
-} Vec;
+} vec;
 
-Vec* new_managed_array() {
-	Vec* array = malloc(sizeof(Vec)); 
+vec* new_managed_array() {
+	vec* array = malloc(sizeof(vec)); 
 	
 	if (!array) {
 		return NULL;
@@ -26,7 +26,7 @@ Vec* new_managed_array() {
 	return array;
 }
 
-int append(Vec* array, int value) {
+int append(vec* array, int value) {
 
 	array->values[array->len] = value;
 	array->len++;
@@ -44,12 +44,12 @@ int append(Vec* array, int value) {
 	return 0;
 }
 
-void free_managed_array(Vec* array) {
+void free_managed_array(vec* array) {
 	free(array->values);
 	free(array);
 }
 
-void print_array(Vec* index) {
+void print_array(vec* index) {
 
 	printf("[");
 	for(int i=0; i<index->len; i++) {

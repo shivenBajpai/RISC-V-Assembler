@@ -5,7 +5,7 @@
 #include "index.h"
 #include "translator.h"
 
-int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, Vec* line_mapping) {
+int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, vec* line_mapping) {
 	char c;
 	char label_buffer[128];
 	int linecount = 1;
@@ -76,7 +76,7 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, Vec* line_mapping)
 	return 0;
 }
 
-int second_pass(FILE* clean_fp, int* hexcode, label_index* index, Vec* line_mapping, bool debug) {
+int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapping, bool debug) {
 	
 	char name[8]; // Sufficient for any valid instruction/pseudo instruction in Base class
 	int instruction_count = 0;
@@ -171,7 +171,7 @@ int main(int argc, char **argv) {
 	FILE *in_fp = fopen("input.s", "r");
 	FILE *clean_fp = fopen("cleaned.s", "w+");
 	label_index *index;
-	Vec *line_mapping;
+	vec *line_mapping;
 	int result;
 	index = new_label_index();
 	line_mapping = new_managed_array();

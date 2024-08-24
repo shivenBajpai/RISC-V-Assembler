@@ -18,6 +18,9 @@ TARGET_PATH=./$(OUTDIR)/$(TARGET)
 run: $(TARGET_PATH)
 	@cd bin && ./$(TARGET)
 
+debug: $(TARGET_PATH)
+	@cd bin && ./$(TARGET) -d
+
 .PHONY: build
 build: $(TARGET_PATH)
 
