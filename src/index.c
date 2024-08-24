@@ -85,10 +85,8 @@ void free_label_index(label_index* index) {
 
 void debug_print_label_index(label_index* index) {
 
-	printf("==START==\n");
 	for(int i=0; i<index->len; i++) {
 		printf("%s: %d\n", index->labels[i], index->positions[i]);
 	}
-	printf("==END==\n");
 	
 }

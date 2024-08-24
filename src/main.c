@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "vec.h"
 #include "index.h"
 #include "translator.h"
@@ -75,7 +76,7 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, Vec* line_mapping)
 	return 0;
 }
 
-int second_pass(FILE* clean_fp, int* hexcode, label_index* index, Vec* line_mapping) {
+int second_pass(FILE* clean_fp, int* hexcode, label_index* index, Vec* line_mapping, bool debug) {
 	
 	char name[8]; // Sufficient for any valid instruction/pseudo instruction in Base class
 	int instruction_count = 0;
@@ -142,7 +143,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, Vec* line_mapp
 				
 				if (fail_flag) return 1;
 				hexcode[instruction_count] = instruction->constant + (unsigned int) addend;
-				printf("Wrote instruction %d: %d\n", instruction_count, hexcode[instruction_count]);
+				if (debug) printf("Instruction %d: %08X\n", instruction_count, hexcode[instruction_count]);
 				instruction_count++;
 				i = 0;
 			} else name[i++] = c;
@@ -157,7 +158,15 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, Vec* line_mapp
 	return 0;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+
+	bool debug = false;
+
+	for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i],"-d")==0) {
+			debug = true;
+		}
+    }
 	
 	FILE *in_fp = fopen("input.s", "r");
 	FILE *clean_fp = fopen("cleaned.s", "w+");
@@ -186,9 +195,13 @@ int main(void) {
 
 	int hexcode[line_mapping->len];
 
-	debug_print_label_index(index); // Uncomment This line to get a list of all labels and corresponding instruction numbers in output
+	if (debug) {
+		printf("Labels:\n");
+		debug_print_label_index(index);
+		printf("\n");
+	} // Uncomment This line to get a list of all labels and corresponding instruction numbers in output
 	
-	if ((result = second_pass(clean_fp, hexcode, index, line_mapping)) != 0) {
+	if ((result = second_pass(clean_fp, hexcode, index, line_mapping, debug)) != 0) {
 		printf("FATAL: Code Compilation failed with code %d\nExiting...\n", result);
 		return 1;
 	}
@@ -200,7 +213,7 @@ int main(void) {
 	}
 
 	fwrite(hexcode, 4, (line_mapping->len), output_fp);
-	printf("Wrote %d words to file", line_mapping->len);
+	printf("Wrote %ld words to out.hex\n", line_mapping->len);
 	fclose(output_fp);
 	fclose(clean_fp);
 
