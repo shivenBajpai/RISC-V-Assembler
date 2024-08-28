@@ -1,49 +1,15 @@
-%iffalse
-\let\negmedspace\undefined
-\let\negthickspace\undefined
-\documentclass[journal,12pt,onecolumn]{IEEEtran}
-\usepackage{cite}
-\usepackage{amsmath,amssymb,amsfonts,amsthm}
-\usepackage{algorithmic}
-\usepackage{graphicx}
-\usepackage{textcomp}
-\usepackage{xcolor}
-\usepackage{txfonts}
-\usepackage{listings}
-\usepackage{enumitem}
-\usepackage{mathtools}
-\usepackage{gensymb}
-\usepackage{comment}
-\usepackage[breaklinks=true]{hyperref}
-\usepackage{tkz-euclide} 
-\usepackage{listings}
-\usepackage{gvv}                                        
-%\def\inputGnumericTable{}                                 
-\usepackage[latin1]{inputenc}                                
-\usepackage{color}                                            
-\usepackage{array}                                            
-\usepackage{longtable}                                       
-\usepackage{calc}                                             
-\usepackage{multirow}                                         
-\usepackage{hhline}                                           
-\usepackage{ifthen}                                           
-\usepackage{lscape}
-\usepackage{tabularx}
-\usepackage{array}
+\documentclass[12pt]{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{float}
-
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{problem}{Problem}
-\newtheorem{proposition}{Proposition}[section]
-\newtheorem{lemma}{Lemma}[section]
-\newtheorem{corollary}[theorem]{Corollary}
-\newtheorem{example}{Example}[section]
-\newtheorem{definition}[problem]{Definition}
-\newcommand{\BEQA}{\begin{eqnarray}}
-\newcommand{\EEQA}{\end{eqnarray}}
-\newcommand{\define}{\stackrel{\triangle}{=}}
-\theoremstyle{remark}
-\newtheorem{rem}{Remark}
+\usepackage{geometry}
+\geometry{
+ a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ }
 
 % Marks the beginning of the document
 \begin{document}
@@ -65,7 +31,7 @@
 
 	\section{Preface}
 	This Report outlines the process of creation of this Assembler. The aim was to have it work with all base class instructions and was designed such that it would be used for a GUI based RISCV simulator in the future. 
-	Pseudo instructions were left out of this assembler. There is however a section at the end briefly detailing how one may add pseudo instructions to this assembler.
+	Pseudo instructions were left out of this assembler.
 
 	\section{Breaking down the problem}
 	At its core, parsing assembly instructions involves 3 simple steps:\\
@@ -77,7 +43,7 @@
 	\end{enumerate}
 
 	Since every instruction is processed sequentially, The entire process looks as though it can be implemented in a single loop. However it is not so. Say there is a jump or branch instruction with a label that is declared on a later line, if we are reading and converting line by line, we wouldn't have reached that label yet and thus wont be able to convert the current instruction to binary.\\
-	To solve this issue we use two passes. The first pass looks for Labels and notes down the address to which each label points. Then in the second pass we actually convert the instructions, which can be now be down without any issues since we already know the position of all labels in the code.\\
+	To solve this issue we use two passes. The first pass looks for Labels and notes down the address to which each label points. Then in the second pass we actually convert the instructions, which can be now be done without any issues since we already know the position of all labels in the code.\\
 	For convenience, we also remove excess whitespace in the first pass.\\\\
 
 	Theoretically this could be also be done in a single pass by deferring the conversion of all jump/branch statements to the end of the pass. However my assembler goes with two passes for simplicity\\
@@ -137,8 +103,14 @@
 
 
 	\section{Testing}
-
-	\section{Adding Pseudo Instructions}
-	
+	For testing, I used a small set of test cases comprising of:
+	\begin{itemize}
+		\item{The examples given with the problem statement}
+		\item{My previous Lab assignments under this course}
+		\item{A single program containing all instructions}
+	\end{itemize}
+	Testing is managed by a simple test harness written as a bash script in the tests directory\\
+	To have a ``correct'' output to test against, I needed to use another known correct compiler. Since RIPES does not allow you to save the hex output I used an online riscv assembler at https://riscvasm.lucasteske.dev/ to generate a correct version to test against
+	To run the tests one may use the `make run' command from the root directory.
 
 \end{document}

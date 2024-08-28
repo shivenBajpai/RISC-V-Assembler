@@ -1,10 +1,10 @@
-\contentsline {section}{\numberline {I}Preface}{2}{section.1}%
-\contentsline {section}{\numberline {II}Breaking down the problem}{2}{section.2}%
-\contentsline {section}{\numberline {III}Code Implementation}{3}{section.3}%
-\contentsline {subsection}{\numberline {\mbox {III-A}}The First Pass}{3}{subsection.3.1}%
-\contentsline {subsection}{\numberline {\mbox {III-B}}The Second Pass}{3}{subsection.3.2}%
-\contentsline {subsubsection}{\numberline {\mbox {III-B}1}Parsing the instruction}{3}{subsubsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {\mbox {III-B}2}Parsing the arguments}{3}{subsubsection.3.2.2}%
-\contentsline {subsubsection}{\numberline {\mbox {III-B}3}Calculating binary}{3}{subsubsection.3.2.3}%
-\contentsline {subsection}{\numberline {\mbox {III-C}}A note on logistics}{3}{subsection.3.3}%
-\contentsline {section}{\numberline {IV}Testing}{3}{section.4}%
+\contentsline {section}{\numberline {1}Preface}{2}{}%
+\contentsline {section}{\numberline {2}Breaking down the problem}{2}{}%
+\contentsline {section}{\numberline {3}Code Implementation}{3}{}%
+\contentsline {subsection}{\numberline {3.1}The First Pass}{3}{}%
+\contentsline {subsection}{\numberline {3.2}The Second Pass}{3}{}%
+\contentsline {subsubsection}{\numberline {3.2.1}Parsing the instruction}{3}{}%
+\contentsline {subsubsection}{\numberline {3.2.2}Parsing the arguments}{3}{}%
+\contentsline {subsubsection}{\numberline {3.2.3}Calculating binary}{4}{}%
+\contentsline {subsection}{\numberline {3.3}A Note On Logistics}{4}{}%
+\contentsline {section}{\numberline {4}Testing}{4}{}%
