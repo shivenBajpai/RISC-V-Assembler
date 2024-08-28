@@ -241,7 +241,6 @@ int main(int argc, char **argv) {
 	}
 
 	fwrite(hexcode, 4, (line_mapping->len), output_fp);
-	printf("Wrote %ld words to out.hex\n", line_mapping->len);
 	fclose(output_fp);
 	fclose(clean_fp);
 

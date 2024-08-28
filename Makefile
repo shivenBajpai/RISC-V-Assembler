@@ -6,6 +6,7 @@ CLFLAGS =
 SRCDIR=src
 OBJDIR=build
 OUTDIR=bin
+TEST_TEMPDIR=tests/outputs
 TARGET=riscv_asm
 
 # DO NOT EDIT BELOW
@@ -20,6 +21,9 @@ run: $(TARGET_PATH)
 
 debug: $(TARGET_PATH)
 	@cd bin && ./$(TARGET) -d
+
+test: $(TARGET_PATH)
+	@cd tests && ./test.bash
 
 .PHONY: build
 build: $(TARGET_PATH)
@@ -38,6 +42,7 @@ report:
 
 .PHONY: clean
 clean:
-	@echo "Removing Build files..."
+	@echo "Removing Build and Test files..."
 	-@rm ./$(OBJDIR)/*.o
 	-@rm ./$(OUTDIR)/$(TARGET)
+	-@rm ./$(TEST_TEMPDIR)/*
