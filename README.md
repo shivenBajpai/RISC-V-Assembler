@@ -10,7 +10,7 @@ See the next section for how to specify input/output files
 # Command line switches
 `-d` 
 `--debug`
-Runs the assembler in debug mode, providing more verbose output as it runss
+Runs the assembler in debug mode, providing more verbose output as it runs
 
 `-i <filename>`
 `--input <filename>`

@@ -3,3 +3,4 @@
 *.o
 riscv_asm
 /.vscode/
+/tests/outputs/
