@@ -165,13 +165,38 @@ int main(int argc, char **argv) {
 
 	bool debug = false;
 
+	char *input_file_name = "input.s";
+	char *output_file_name = "output.hex";
+
 	for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i],"-d")==0) {
+        if (strcmp(argv[i],"-d")==0 || strcmp(argv[i],"--debug")==0) {
 			debug = true;
+		}
+
+		if (strcmp(argv[i],"-i")==0 || strcmp(argv[i],"--input")==0) {
+			i++;
+			if (i==argc) {
+				printf("Missing input file name for option input\n");
+				return 1;
+			}
+
+			input_file_name = argv[i];
+
+		}
+
+		if (strcmp(argv[i],"-o")==0 || strcmp(argv[i],"--output")==0) {
+			i++;
+			if (i==argc) {
+				printf("Missing input file name for option output\n");
+				return 1;
+			}
+
+			output_file_name = argv[i];
 		}
     }
 	
-	FILE *in_fp = fopen("input.s", "r");
+	
+	FILE *in_fp = fopen(input_file_name, "r");
 	FILE *clean_fp = fopen("cleaned.s", "w+");
 	label_index *index;
 	vec *line_mapping;
@@ -180,7 +205,7 @@ int main(int argc, char **argv) {
 	line_mapping = new_managed_array();
 
 	if (!in_fp) {
-		printf("FATAL: Failed to read input.s!\nExiting...\n");
+		printf("FATAL: Failed to read %s!\nExiting...\n", input_file_name);
 		return 1;
 	}
 	if (!clean_fp) {
@@ -209,9 +234,9 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	FILE *output_fp = fopen("output.hex", "wb");
+	FILE *output_fp = fopen(output_file_name, "wb");
 	if (!output_fp) {
-		printf("FATAL: Failed to write to output.hex!\nExiting...\n");
+		printf("FATAL: Failed to write to %s!\nExiting...\n", output_file_name);
 		return 1;
 	}
 
