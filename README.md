@@ -4,10 +4,20 @@ This is a RISC-V Assembler written to be RV64I Capable for a college project (CS
 
 # How To use
 1) Run `make build` to compile the project, binary is produced in `/bin` called `riscv_asm`
-2) Copy the input assembly code to a file called input.s in the same directory as the binary
-3) Run the binary. A temporary file called `clean.s` will be created and the machine code output shall be in `output.hex`. Both in the same directory
+2) Run the binary. A temporary file called `cleaned.s` will be created and the machine code output shall be in `output.hex` in the same directory by default. 
+See the next section for how to specify input/output files
 
 # Command line switches
-`-d` - Runs the assembler in debug mode, providing more verbose output as it runss
+`-d` 
+`--debug`
+Runs the assembler in debug mode, providing more verbose output as it runss
+
+`-i <filename>`
+`--input <filename>`
+Specifies a file for input, defaults to input.s if not specified
+
+`-o <filename>`
+`--output <filename>`
+Specifies a file for output, defaults to output.hex if not specified
 
 A more detailed report on the design and features of this assembler is present in `report.pdf` at the root of this project
