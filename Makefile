@@ -31,6 +31,7 @@ build: $(TARGET_PATH)
 $(TARGET_PATH): $(OBJS)
 	@echo "Linking..."
 	@$(CC) $(CLFLAGS) -o $(TARGET_PATH) $(OBJS)
+	@echo "Binary generated in /bin"
 
 ./build/%.o: ./$(SRCDIR)/%.c
 	@echo "Compiling $<..."

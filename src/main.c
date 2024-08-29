@@ -97,7 +97,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 					return 1;
 				}
 
-				int addend;
+				int addend = 0;
 				bool fail_flag = false;
 
 				switch (instruction->handler_type) {

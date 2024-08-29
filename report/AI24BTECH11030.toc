@@ -1,10 +1,11 @@
 \contentsline {section}{\numberline {1}Preface}{2}{}%
-\contentsline {section}{\numberline {2}Breaking down the problem}{2}{}%
+\contentsline {section}{\numberline {2}Approach to the Problem}{2}{}%
 \contentsline {section}{\numberline {3}Code Implementation}{3}{}%
-\contentsline {subsection}{\numberline {3.1}The First Pass}{3}{}%
-\contentsline {subsection}{\numberline {3.2}The Second Pass}{3}{}%
-\contentsline {subsubsection}{\numberline {3.2.1}Parsing the instruction}{3}{}%
-\contentsline {subsubsection}{\numberline {3.2.2}Parsing the arguments}{3}{}%
-\contentsline {subsubsection}{\numberline {3.2.3}Calculating binary}{4}{}%
-\contentsline {subsection}{\numberline {3.3}A Note On Logistics}{4}{}%
+\contentsline {subsection}{\numberline {3.1}Noting Position of labels}{4}{}%
+\contentsline {subsection}{\numberline {3.2}Instruction lookup tables}{4}{}%
+\contentsline {subsection}{\numberline {3.3}Parsing Arguments}{4}{}%
+\contentsline {subsection}{\numberline {3.4}Error Handling}{4}{}%
 \contentsline {section}{\numberline {4}Testing}{4}{}%
+\contentsline {section}{Appendices}{6}{}%
+\contentsline {subsection}{\numberline {A}Usage Guide}{6}{}%
+\contentsline {subsection}{\numberline {B}Project File Structure}{7}{}%

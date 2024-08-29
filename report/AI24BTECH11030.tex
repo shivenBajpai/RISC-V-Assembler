@@ -1,8 +1,7 @@
 \documentclass[12pt]{article}
 \usepackage{graphicx} % Required for inserting images
 \usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{float}
+\usepackage[T1]{fontenc}
 \usepackage{geometry}
 \geometry{
  a4paper,
@@ -11,8 +10,7 @@
  top=20mm,
  }
 
-% Marks the beginning of the document
-\begin{document}
+ \begin{document}
 	\bibliographystyle{IEEEtran}
 	\vspace{3cm}
 
@@ -20,97 +18,164 @@
 	\author{Shiven Bajpai - AI24BTECH11030}
 
 	\maketitle
-	\bigskip
+	\bigskip    	
 
 	\renewcommand{\thefigure}{\theenumi}
 	\renewcommand{\thetable}{\theenumi}
 
 	\tableofcontents
-
 	\newpage
 
-	\section{Preface}
-	This Report outlines the process of creation of this Assembler. The aim was to have it work with all base class instructions and was designed such that it would be used for a GUI based RISCV simulator in the future. 
-	Pseudo instructions were left out of this assembler.
+    \section{Preface}
+    In this project I aimed to create an assembler that was fully RV64I Compatible. I wanted to implement pseudo instructions as well but due to time constraints I decided not to. I have learnt a lot over the course of this project and as a fresher I must say it was probably the most exciting thing I have worked on in college so far.
+    \\
 
-	\section{Breaking down the problem}
-	At its core, parsing assembly instructions involves 3 simple steps:\\
+    In the end I had an assembler which had the following capabilities:
+    \begin{itemize}
+        \item Supports all RV64I Base Integer Instructions
+        \item Is able to correctly handle whitespace and comments
+        \item Is capable of handling literals in Decimal, Hex, Octal and Binary formats
+        \item Gives clear error reporting including the Line number as well as type of issue.
+        \item Has basic command line options for specifying custom file names and enabling debug information
+    \end{itemize}
 
-	\begin{enumerate}
+    \section{Approach to the Problem}
+
+    The way I approached the problem was that I identified 3 simple steps that had to be performed for every instruction in the input:
+
+    \begin{enumerate}
 		\item{Read the instruction}
 		\item{Convert it to binary}
-		\item{Write the binary code to the output file/buffer\\\\}
+		\item{Write the binary code to the output file/buffer}
 	\end{enumerate}
 
-	Since every instruction is processed sequentially, The entire process looks as though it can be implemented in a single loop. However it is not so. Say there is a jump or branch instruction with a label that is declared on a later line, if we are reading and converting line by line, we wouldn't have reached that label yet and thus wont be able to convert the current instruction to binary.\\
-	To solve this issue we use two passes. The first pass looks for Labels and notes down the address to which each label points. Then in the second pass we actually convert the instructions, which can be now be done without any issues since we already know the position of all labels in the code.\\
-	For convenience, we also remove excess whitespace in the first pass.\\\\
+    At first It seemed as though I could achieve this in a single loop iterating over all instructions. However there was the issue that if I were parsing the input sequentially it would not be possible for me to resolve a Label in one instruction that is declared on a later line. To remedy this problem I could've chosen to defer the processing of all instructions including labels to happen after processing all other instructions, however I chose a simpler approach where I performed two passes. One where I identified labels and the other where I actually processed the instructions.
+    \\
 
-	Theoretically this could be also be done in a single pass by deferring the conversion of all jump/branch statements to the end of the pass. However my assembler goes with two passes for simplicity\\
-	The rough control flow can be written as follows:\\
+    I also made some extra design decisions outside of the requirements of the problem statement, the justification for which is as follows:
+    \\
 
-	\begin{enumerate}
-		\item{Load the file}
-		
-		\item{Read every line, for every line \begin{enumerate} 
-			\item{If there is a flag declared, note down the flag's position}
-			\item{Remove whitespace/flags and write it to a temporary file `cleaned.s'}
-			\end{enumerate}}
+    I chose to remove unnecessary whitespace in the first pass as well. Not only does this simplify the processing in the second pass, but also it provided me with an opportunity to create an intermediate cleaned up version of the code without labels and extra whitespace. My program write this intermediate version out to a separate file called "cleaned.s". The reason for this is that, inspired by the RIPES simulator, I wanted to have my simulator (in the next project) capable of showing a cleaned up version of the code separated by labels just like RIPES has in the middle pane of the Editor tab.
 
-		\item{Read every line from the temporary file, for every line\begin{enumerate} 
-			\item{Read the name of the instruction}
-			\item{If the instruction is invalid, exit gracefully}
-			\item{Based on the instruction, try to read the arguments and check for validity}
-			\item{If the arguments are invalid, exit gracefully}
-			\item{Convert to binary and write to a temporary buffer}
-			\end{enumerate}}
+    \section{Code Implementation}
 
-		\item{Write the full binary code from the temporary buffer to the output file `out.hex'\\}
-	\end{enumerate}
+    The overall control flow of my program can be summarized as follows:
+    \\\\
 
-	Although it is not necessary to write the intermediate output of pass 1 to a file instead of just a buffer for the objective of this program, it is included since the assembler is designed with the intention of being integrated with a GUI simulator for the next project of this course so having a cleaned up version of the code would be useful for then.
-	The temporary buffer between the second pass and final writing to binary is to avoid a scenario where an incomplete binary is produced as a result of a program being partially assembled and then having the assembler encounter an error causing it to stop and leave behind a binary with unpredictable contents.
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=1\linewidth]{Flowchart.png}
+        \caption{Program Flowchart}
+        \label{fig:flowchart}
+    \end{figure}
 
-	\section{Code Implementation}
+    Note that to keep it clean, some checks for overflowing buffer size while reading instruction/Label names have been omitted from the flowchart. Essentially, if an instruction/label name is longer than 128 chars the program will declare it invalid and exit gracefully.
+    \\
 
-		This section only touches on the parts key to assembly to binary conversion, and leaves out mundane details like file handling and the fine details of memory management.\\
-		For simplifying the code, 2 data structures have been defined \verb|vec| and \verb|label_index|. vec is essentially a glorified array that handles expanding its memory allocation on its own. \verb|label_index| is a collection of label-position pairs that are later searched when trying to resolve labels during the second pass
+    \subsection{Noting Position of labels}
+    In the first pass, to store information about labels as they are encountered, I use a struct called label\_index which is defined in \verb#index.c#. This struct is essentially a data structure that manages a pair of key and value arrays. Some helper functions are defined that take care of memory management and the function \verb#int label_to_position# performs a linear search over the data to convert labels to addresses
+    
+    \subsection{Instruction lookup tables}
+    Information about the instructions is hard coded into the program in an array of structs containing the instruction name, a number corresponding constant bits set, and an enum value indicating which function is to be called to parse arguments. While parsing instructions this enum value is checked via a switch statement to call the right function. The lookup table is present in \verb#translator.c#
+    \\
 
-		\subsection{The First Pass}
+    I would like to note that for a large set of instructions it would be considerably faster to use a hashmap for such lookup operations, but since the size of instructions here was relatively small I chose to skip using a hashmap for simplicity.
 
-			In this pass the code goes through the input charachter by charachter. A series of different flags are used to keep track of state.
-			We essentially just remove excess whitespace and copy the rest to the output buffer. If a colon is encountered, the program discards the text from the current line before the colon, treating it as a label and noting down its position in a \verb|label_index|.
-			Additionally, the program builds up an array of the line number on which each instruction was written, this helps it know which line number to report in an error message if an error is encountered in the second pass, since the line number of an instruction in the output of the first pass may be different from the line number in the input due to removal of whitespace
-				
-		\subsection{The Second Pass}
+    \subsection{Parsing Arguments}
+    Arguments are parsed by individual functions that are uniquely defined for different types of instructions which have different formats of arguments, each of these unique functions simply calls a generalized function \verb#int* parse_args# with the right parameters based on the format, then performs some extra checks and transformations on the returned values to encode the arguments as per the instruction format and then returns this number.
 
-			\subsubsection{Parsing the instruction} \label{instruction_parse}
-			Thanks to handling unnecessary whitespace in the first pass, to read an instruction the second pass can simply keep reading chars into a buffer until it encounters a space.
-			The program then tries to look-up information about this instruction in the list of instruction it has. If it does not find a matching instruction, it gives an error and exits.unpredictable
-			If the program finds a matching instruction, It is able to look-up information regarding the encoding format of the instruction, the format of the arguments as well as the constant parts of the instruction's enconding (opcode, funct3, funct7 etc.)
+    \subsection{Error Handling}
+    Whenever an error is encountered, the program has three aims: Free memory, report the error and exit gracefully
+    \\
 
-			\subsubsection{Parsing the arguments}
-			On performing the lookup the program gets a value of type \verb|enum instruction_type|'. This is matched in a switch-case block and a parser function for that format of arguments is called.
-			This function just calls another generalized argument parser with the right parameters, performs any extra validation if applicable (like 12-bit limit for immediate values of many instructions)
-			And then it encodes the arguments as per the format and returns that as a long int.
+    The error reporting is done immediately in whichever function the error is encountered. Then although it would be sufficient to simply exit the program there and let the OS de-allocate memory, In my program all functions return and indicate to the caller in some way or another that the function failed, which causes to caller to also free memory and return until the main function is reached which is where the program actually always exits.\\
 
-			\subsubsection{Calculating binary}
-			The encoded arguments from the parser function is just combined with the constant part from looking up the instruction in section \ref{instruction_parse}. The two numbers contain different parts of the full encoded instruction and are combind with a bitwise OR operation.
-			After this the program writes the output to a buffer that holds the output until all instrutions have been encoded.
+    Since we are reading a cleaned up version of the input in the second pass, the line numbers may not match those in the input, so there is also a \verb|vec| struct called \verb|line_mapping| that is passed around that contains the mapping between instruction numbers and the line on which they appear in the input file
 
-			\subsection{A Note On Logistics}
-			A lot of function calls occur during this pass. For the sake of efficiency, instead of creating buffers to send the arguments to the argument parsing functions, we pass a pointer to the file pointer reading the intermediate `cleaned.s' file. The argument parser simply increments the file pointer as it reads the arguments. When the function returns, the pointer ends up at the next line ready for the next iteration of the loop to attempt to read another instruction.
-
-
-	\section{Testing}
-	For testing, I used a small set of test cases comprising of:
+    \section{Testing}
+    For testing, I used a small set of test cases comprising of:
+    
 	\begin{itemize}
 		\item{The examples given with the problem statement}
 		\item{My previous Lab assignments under this course}
 		\item{A single program containing all instructions}
 	\end{itemize}
-	Testing is managed by a simple test harness written as a bash script in the tests directory\\
+	
+ Testing is managed by a simple test harness written as a bash script in the tests directory\\
 	To have a ``correct'' output to test against, I needed to use another known correct compiler. Since RIPES does not allow you to save the hex output I used an online riscv assembler at https://riscvasm.lucasteske.dev/ to generate a correct version to test against
 	To run the tests one may use the `make run' command from the root directory.
 
+    \iffalse
+    \section{Learnings in Hindsight}
+    Looking back after completing this project I have quite a few things I realized I could've done differently that I would like to quickly mention. 
+    \begin{enumerate}
+        \item I didn't need to free memory before exiting when an error was encountered because the OS does it anywys
+        \item I could've used a more advanced approach using a lexer that would've given me more information allowing for better error reporting
+        \item I did learn how to implement a hashmap for this project but then decided not to use it but maybe I could've done so.
+    \end{enumerate}
+    \fi
+
+    \newpage
+    \appendix
+    \section*{Appendices}
+    \addcontentsline{toc}{section}{Appendices}
+    \renewcommand{\thesubsection}{\Alph{subsection}}
+    
+    \subsection{Usage Guide}
+
+    \subsubsection*{How To build}
+    \begin{enumerate}
+        \item Run `make build` to compile the project, binary is produced in \verb#/bin# called \verb#riscv_asm#
+        \item Run the binary. A temporary file called `cleaned.s` will be created and the machine code output shall be in `output.hex` in the same directory by default. 
+    See the next section for how to specify input/output files
+    \end{enumerate}
+    
+    \subsubsection*{Command line switches}
+    \begin{verbatim}
+`-d` 
+`--debug`\end{verbatim}
+    Runs the assembler in debug mode, providing more verbose output as it runs
+    \\
+    
+    \begin{verbatim}
+`-i <filename>`
+`--input <filename>`\end{verbatim}
+    Specifies a file for input, defaults to input.s if not specified
+    \\
+    
+    \begin{verbatim}
+`-o <filename>`
+`--output <filename>`\end{verbatim}
+    Specifies a file for output, defaults to output.hex if not specified
+
+    \newpage
+    \subsection{Project File Structure}
+
+    \begin{verbatim}
+.
++-- root
+    +-- bin/                    (Contains output binary when built)
+    +-- build/                  (Object files are placed here)
+    +-- report/
+    |   +-- AI24BTECH11030.tex  (The latex file for project report)
+    +-- src/
+    |   +-- index.c             (Defines label_index struct)
+    |   +-- index.h
+    |   +-- main.c              (Main file)
+    |   +-- translator.c        (Contains most functions and hard-coded data 
+    |   |                        regarding instruction parsing)
+    |   +-- translator.h
+    |   +-- vec.c               (Defines the vec struct)
+    |   +--  vec.h
+    +-- tests/
+    |   +-- cases/              (The actual tests cases are stored here)
+    |   |   +-- (...)
+    |   +-- outputs/            (Program output from running tests goes here)
+    |   +-- test.bash           (Basic Test harness used for running tests)
+    +-- .gitignore
+    +-- LICENSE
+    +-- README.md
+    +-- report.pdf              (Project report)
+    +-- Makefile\end{verbatim}
+    
 \end{document}
