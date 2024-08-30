@@ -33,8 +33,8 @@
     In the end I had an assembler which had the following capabilities:
     \begin{itemize}
         \item Supports all RV64I Base Integer Instructions
-        \item Is able to correctly handle whitespace and comments
-        \item Is capable of handling literals in Decimal, Hex, Octal and Binary formats
+        \item Is able to correctly handle whitespace and comments (comments may begin with # or ;)
+        \item Is capable of handling literals in Decimal, Hex, Octal and Binary formats (Follows C convention for syntax)
         \item Gives clear error reporting including the Line number as well as type of issue.
         \item Has basic command line options for specifying custom file names and enabling debug information
     \end{itemize}
