@@ -85,7 +85,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 
 	while ((c = fgetc(clean_fp)) != EOF) {
 		if (i<8) {
-			if (c == ' ' || c == '\t') {
+			if (c == ' ' || c == '\t' || c == '\n') {
 				name[i] = '\0';
 
 				// Attempt instruction translation

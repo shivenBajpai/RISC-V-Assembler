@@ -25,7 +25,7 @@ Remainder:
         add a1, a1, a2
         sub a2, a1, a2
         sub a1, a1, a2
-        jalr x0, x1, 0
+        jalr x0, 0(x1)
 
 Start:
     addi x4, x3, 0x200
