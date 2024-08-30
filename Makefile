@@ -44,6 +44,6 @@ report:
 .PHONY: clean
 clean:
 	@echo "Removing Build and Test files..."
-	-@rm ./$(OBJDIR)/*.o
-	-@rm ./$(OUTDIR)/$(TARGET)
-	-@rm ./$(TEST_TEMPDIR)/*
+	-@rm -f ./$(OBJDIR)/*.o
+	-@rm -f ./$(OUTDIR)/$(TARGET)
+	-@rm -f ./$(TEST_TEMPDIR)/*
