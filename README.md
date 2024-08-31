@@ -21,3 +21,33 @@ Specifies a file for input, defaults to input.s if not specified
 Specifies a file for output, defaults to output.hex if not specified
 
 A more detailed report on the design and features of this assembler is present in `report.pdf` at the root of this project
+
+# File structure 
+
+```
+.
++-- root
+    +-- bin/                    (Contains output binary when built)
+    +-- build/                  (Object files are placed here)
+    +-- report/
+    |   +-- AI24BTECH11030.tex  (The latex file for project report)
+    +-- src/
+    |   +-- index.c             (Defines label_index struct)
+    |   +-- index.h
+    |   +-- main.c              (Main file)
+    |   +-- translator.c        (Contains most functions and hard-coded data 
+    |   |                        regarding instruction parsing)
+    |   +-- translator.h
+    |   +-- vec.c               (Defines the vec struct)
+    |   +--  vec.h
+    +-- tests/
+    |   +-- cases/              (The actual tests cases are stored here)
+    |   |   +-- (...)
+    |   +-- outputs/            (Program output from running tests goes here)
+    |   +-- test.bash           (Basic Test harness used for running tests)
+    +-- .gitignore
+    +-- LICENSE
+    +-- README.md
+    +-- report.pdf              (Project report)
+    +-- Makefile
+```

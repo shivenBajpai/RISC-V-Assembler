@@ -28,12 +28,10 @@ debug: $(TARGET_PATH)
 test: $(TARGET_PATH)
 	@cd tests && ./test.bash
 
-.PHONY: build
-
 $(TARGET_PATH): $(OBJS)
 	@echo "Linking..."
 	@$(CC) $(CLFLAGS) -o $(TARGET_PATH) $(OBJS)
-	@echo "Binary generated in /bin"
+	@echo "Binary generated in /bin, a copy is available at the project root"
 
 ./build/%.o: ./$(SRCDIR)/%.c
 	@echo "Compiling $<..."
@@ -49,3 +47,4 @@ clean:
 	-@rm -f ./$(OBJDIR)/*.o
 	-@rm -f ./$(OUTDIR)/$(TARGET)
 	-@rm -f ./$(TEST_TEMPDIR)/*
+	-@rm -f ./$(TARGET)
