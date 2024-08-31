@@ -16,17 +16,19 @@ OBJ_NAMES=$(patsubst %.c,%.o,$(SRCS))
 OBJS=$(patsubst ./$(SRCDIR)%,./$(OBJDIR)%,$(OBJ_NAMES))
 TARGET_PATH=./$(OUTDIR)/$(TARGET)
 
+build: $(TARGET_PATH)
+	@cp $(OUTDIR)/$(TARGET) ./
+
 run: $(TARGET_PATH)
-	@cd bin && ./$(TARGET)
+	@cd $(OUTDIR) && ./$(TARGET)
 
 debug: $(TARGET_PATH)
-	@cd bin && ./$(TARGET) -d
+	@cd $(OUTDIR) && ./$(TARGET) -d
 
 test: $(TARGET_PATH)
 	@cd tests && ./test.bash
 
 .PHONY: build
-build: $(TARGET_PATH)
 
 $(TARGET_PATH): $(OBJS)
 	@echo "Linking..."
