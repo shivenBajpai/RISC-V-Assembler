@@ -33,7 +33,7 @@
     In the end I had an assembler which had the following capabilities:
     \begin{itemize}
         \item Supports all RV64I Base Integer Instructions
-        \item Is able to correctly handle whitespace and comments (comments may begin with # or ;)
+        \item Is able to correctly handle whitespace and comments (comments may begin with \# or ;)
         \item Is capable of handling literals in Decimal, Hex, Octal and Binary formats (Follows C convention for syntax)
         \item Gives clear error reporting including the Line number as well as type of issue.
         \item Has basic command line options for specifying custom file names and enabling debug information
@@ -45,17 +45,14 @@
 
     \begin{enumerate}
 		\item{Read the instruction}
-		\item{Convert it to binary}
+		\item{Encode it as per applicable format}
 		\item{Write the binary code to the output file/buffer}
 	\end{enumerate}
 
     At first It seemed as though I could achieve this in a single loop iterating over all instructions. However there was the issue that if I were parsing the input sequentially it would not be possible for me to resolve a Label in one instruction that is declared on a later line. To remedy this problem I could've chosen to defer the processing of all instructions including labels to happen after processing all other instructions, however I chose a simpler approach where I performed two passes. One where I identified labels and the other where I actually processed the instructions.
     \\
 
-    I also made some extra design decisions outside of the requirements of the problem statement, the justification for which is as follows:
-    \\
-
-    I chose to remove unnecessary whitespace in the first pass as well. Not only does this simplify the processing in the second pass, but also it provided me with an opportunity to create an intermediate cleaned up version of the code without labels and extra whitespace. My program write this intermediate version out to a separate file called "cleaned.s". The reason for this is that, inspired by the RIPES simulator, I wanted to have my simulator (in the next project) capable of showing a cleaned up version of the code separated by labels just like RIPES has in the middle pane of the Editor tab.
+    I also chose to remove unnecessary whitespace in the first pass as well. Not only does this simplify the processing in the second pass, but also it provided me with an opportunity to create an intermediate cleaned up version of the code without labels and extra whitespace. The assembler writes this intermediate version out to a separate file called "cleaned.s". The motivation for this is that, inspired by the RIPES simulator, I wanted to have my simulator (in the next project) capable of showing a cleaned up version of the code separated by labels just like RIPES has in the middle pane of the Editor tab.
 
     \section{Code Implementation}
 
@@ -76,21 +73,21 @@
     In the first pass, to store information about labels as they are encountered, I use a struct called label\_index which is defined in \verb#index.c#. This struct is essentially a data structure that manages a pair of key and value arrays. Some helper functions are defined that take care of memory management and the function \verb#int label_to_position# performs a linear search over the data to convert labels to addresses
     
     \subsection{Instruction lookup tables}
-    Information about the instructions is hard coded into the program in an array of structs containing the instruction name, a number corresponding constant bits set, and an enum value indicating which function is to be called to parse arguments. While parsing instructions this enum value is checked via a switch statement to call the right function. The lookup table is present in \verb#translator.c#
+    Information about the instructions is hard coded into the program in an array of structs containing the instruction name, a number which has just the  constant bits set, and an enum value indicating which function is to be called to parse arguments. While parsing instructions this enum value is checked via a switch statement to call the right function. The lookup table is present in \verb#translator.c#
     \\
 
     I would like to note that for a large set of instructions it would be considerably faster to use a hashmap for such lookup operations, but since the size of instructions here was relatively small I chose to skip using a hashmap for simplicity.
 
     \subsection{Parsing Arguments}
-    Arguments are parsed by individual functions that are uniquely defined for different types of instructions which have different formats of arguments, each of these unique functions simply calls a generalized function \verb#int* parse_args# with the right parameters based on the format, then performs some extra checks and transformations on the returned values to encode the arguments as per the instruction format and then returns this number.
+    Arguments are parsed by individual functions that are uniquely defined for different groups of instructions which have different formats of arguments, each of these unique functions simply calls a generalized function \verb#int* parse_args# with the right parameters based on the format, then performs some extra checks and transformations on the returned values to encode the arguments as per the instruction format and then returns this number.
 
     \subsection{Error Handling}
-    Whenever an error is encountered, the program has three aims: Free memory, report the error and exit gracefully
+    Whenever an error is encountered, the program has two aims: Free memory, report the error and exit gracefully
     \\
 
-    The error reporting is done immediately in whichever function the error is encountered. Then although it would be sufficient to simply exit the program there and let the OS de-allocate memory, In my program all functions return and indicate to the caller in some way or another that the function failed, which causes to caller to also free memory and return until the main function is reached which is where the program actually always exits.\\
+    The error reporting is done immediately in whichever function the error is encountered. Then although it would be sufficient to simply exit the program then and there and let the OS de-allocate memory, It is best practice to always deallocate memory, In my program all functions return and indicate to the caller in some way or another that the function failed, which causes to caller to also free memory and return until the main function is reached which is where the program actually always exits.\\
 
-    Since we are reading a cleaned up version of the input in the second pass, the line numbers may not match those in the input, so there is also a \verb|vec| struct called \verb|line_mapping| that is passed around that contains the mapping between instruction numbers and the line on which they appear in the input file
+    Since we are reading a cleaned up version of the input in the second pass, the line numbers may not match those in the input, so there is also a struct called \verb|line_mapping| of custom type \verb|vec| that is passed around that contains the mapping between instruction numbers and the line on which they appear in the input file
 
     \section{Testing}
     For testing, I used a small set of test cases comprising of:
@@ -101,19 +98,9 @@
 		\item{A single program containing all instructions}
 	\end{itemize}
 	
- Testing is managed by a simple test harness written as a bash script in the tests directory\\
+ Testing is managed by a simple test harness written as a bash script in the tests directory. You can run all tests by running \verb|make run| in the project root\\
 	To have a ``correct'' output to test against, I needed to use another known correct compiler. Since RIPES does not allow you to save the hex output I used an online riscv assembler at https://riscvasm.lucasteske.dev/ to generate a correct version to test against
 	To run the tests one may use the `make run' command from the root directory.
-
-    \iffalse
-    \section{Learnings in Hindsight}
-    Looking back after completing this project I have quite a few things I realized I could've done differently that I would like to quickly mention. 
-    \begin{enumerate}
-        \item I didn't need to free memory before exiting when an error was encountered because the OS does it anywys
-        \item I could've used a more advanced approach using a lexer that would've given me more information allowing for better error reporting
-        \item I did learn how to implement a hashmap for this project but then decided not to use it but maybe I could've done so.
-    \end{enumerate}
-    \fi
 
     \newpage
     \appendix

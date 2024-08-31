@@ -4,3 +4,4 @@
 riscv_asm
 /.vscode/
 /tests/outputs/
+*.zip
