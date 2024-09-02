@@ -25,9 +25,9 @@ const instruction_info instructions[] = {
     "xori",     0b0010011+(0x4<<12),            I1_TYPE,
     "ori",      0b0010011+(0x6<<12),            I1_TYPE,
     "andi",     0b0010011+(0x7<<12),            I1_TYPE,
-    "slli",     0b0010011+(0x1<<12)+(0x00<<26), I1_TYPE,
-    "srli",     0b0010011+(0x5<<12)+(0x00<<26), I1_TYPE,
-    "srai",     0b0010011+(0x5<<12)+(0x10<<26), I1_TYPE,
+    "slli",     0b0010011+(0x1<<12)+(0x00<<26), I1B_TYPE,
+    "srli",     0b0010011+(0x5<<12)+(0x00<<26), I1B_TYPE,
+    "srai",     0b0010011+(0x5<<12)+(0x10<<26), I1B_TYPE,
     "slti",     0b0010011+(0x2<<12),            I1_TYPE,
     "sltiu",    0b0010011+(0x3<<12),            I1_TYPE,
 
@@ -233,7 +233,7 @@ int* parse_args(FILE** fpp, label_index* labels, int n_args, argument_type* type
                 }
 
                 if (endptr == arg || *endptr != '\0') {
-                    printf("Argument %d on line %d is invalid for type %s: %s\n", current_arg, *line_number, argument_type_names[types[current_arg]], arg);
+                    printf("Argument %d on line %d is invalid for type %s: %s\n", current_arg+1, *line_number, argument_type_names[types[current_arg]], arg);
                     free(args);
                     return NULL;
                 }
@@ -247,7 +247,7 @@ int* parse_args(FILE** fpp, label_index* labels, int n_args, argument_type* type
                     converted_args[current_arg] = strtol(arg, &endptr, 10);
 
                     if (endptr == arg || *endptr != '\0') {
-                        printf("Failed to interpret argument %d on line %d as numeric offset: %s\n", current_arg, *line_number, arg);
+                        printf("Failed to interpret argument %d on line %d as numeric offset: %s\n", current_arg+1, *line_number, arg);
                         free(args);
                         free(converted_args);
                         return NULL;
@@ -314,8 +314,30 @@ long I1_type_parser(FILE** args_raw, label_index* labels, int* line_number, int 
         return -1;
     }
 
-    if (args[2] >= 4096) {
-        printf("Warning on line %d: Immediate value cannot exceed 12 bits. Some data will be lost...", *line_number);
+    if (args[2] > 2047 || args[2] < -2048) {
+        printf("Error on line %d: Immediate value too large. Stopping...\n", *line_number);
+        *fail_flag = true;
+        return -1;
+    }
+
+    int result = (args[0] << 7) + (args[1] << 15) + (args[2] << 20);
+    free(args);
+    return result;
+}
+
+long I1B_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
+    argument_type types[] = {REGISTER, REGISTER, IMMEDIATE};
+    int* args = parse_args(args_raw, labels, 3, types, line_number, instruction_number);
+
+    if (!args) {
+        *fail_flag = true;
+        return -1;
+    }
+
+    if (args[2] > 63) {
+        printf("Error on line %d: Shift amount cannot exceed 63 bits. Stopping...\n", *line_number);
+        *fail_flag = true;
+        return -1;
     }
 
     int result = (args[0] << 7) + (args[1] << 15) + (args[2] << 20);
@@ -332,8 +354,10 @@ long I2_type_parser(FILE** args_raw, label_index* labels, int* line_number, int 
         return -1;
     }
 
-    if (args[1] >= 4096) {
-        printf("Warning on line %d: Immediate value cannot exceed 12 bits. Some data will be lost...", *line_number);
+    if (args[1] > 2047 || args[1] < -2048) {
+        printf("Error on line %d: Immediate value too large. Stopping...\n", *line_number);
+        *fail_flag = true;
+        return -1;
     }
 
     int result = (args[0] << 7) + (args[2] << 15) + (args[1] << 20);
@@ -350,8 +374,10 @@ long S_type_parser(FILE** args_raw, label_index* labels, int* line_number, int i
         return -1;
     }
 
-    if (args[1] >= 4096) {
-        printf("Warning on line %d: Immediate value cannot exceed 12 bits. Some data will be lost...", *line_number);
+    if (args[1] > 2047 || args[1] < -2048) {
+        printf("Error on line %d: Immediate value too large. Stopping...\n", *line_number);
+        *fail_flag = true;
+        return -1;
     }
 
     int rearranged_immediate = ((args[1] & 0x0000001F) << 7) + ((args[1] & 0x00000FE0) << 20);
@@ -365,6 +391,12 @@ long B_type_parser(FILE** args_raw, label_index* labels, int* line_number, int i
     int* args = parse_args(args_raw, labels, 3, types, line_number, instruction_number);
 
     if (!args) {
+        *fail_flag = true;
+        return -1;
+    }
+
+    if (args[2] > 4094*4 || args[2] < -4096*4) {
+        printf("Error on line %d: Branch offset too large. Stopping...\n", *line_number);
         *fail_flag = true;
         return -1;
     }

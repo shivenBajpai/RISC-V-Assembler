@@ -120,6 +120,10 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 						addend = I1_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 
 
+					case I1B_TYPE:
+						addend = I1B_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
+						break; 
+
 					case I2_TYPE:
 						addend = I2_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
 						break; 

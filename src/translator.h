@@ -13,6 +13,7 @@ typedef struct instruction_info {
 typedef enum instruction_type {
     R_TYPE,
     I1_TYPE,
+    I1B_TYPE,
     I2_TYPE,
     S_TYPE,
     B_TYPE,
@@ -30,6 +31,7 @@ typedef enum argument_type {
 
 long R_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
 long I1_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
+long I1B_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
 long I2_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
 long S_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
 long B_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag);
