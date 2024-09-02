@@ -36,7 +36,7 @@
         \item Is able to correctly handle whitespace and comments (comments may begin with \# or ;)
         \item Is capable of handling literals in Decimal, Hex, Octal and Binary formats (Follows C convention for syntax)
         \item Gives clear error reporting including the Line number as well as type of issue.
-        \item Has basic command line options for specifying custom file names and enabling debug information
+        \item Has basic command line options for specifying custom file names, enabling debug information and specifying output format.
     \end{itemize}
 
     \section{Approach to the Problem}
@@ -46,7 +46,7 @@
     \begin{enumerate}
 		\item{Read the instruction}
 		\item{Encode it as per applicable format}
-		\item{Write the binary code to the output file/buffer}
+		\item{Write the encoded instruction to the output file/buffer}
 	\end{enumerate}
 
     At first It seemed as though I could achieve this in a single loop iterating over all instructions. However there was the issue that if I were parsing the input sequentially it would not be possible for me to resolve a Label in one instruction that is declared on a later line. To remedy this problem I could've chosen to defer the processing of all instructions including labels to happen after processing all other instructions, however I chose a simpler approach where I performed two passes. One where I identified labels and the other where I actually processed the instructions.
@@ -82,12 +82,12 @@
     Arguments are parsed by individual functions that are uniquely defined for different groups of instructions which have different formats of arguments, each of these unique functions simply calls a generalized function \verb#int* parse_args# with the right parameters based on the format, then performs some extra checks and transformations on the returned values to encode the arguments as per the instruction format and then returns this number.
 
     \subsection{Error Handling}
-    Whenever an error is encountered, the program has two aims: Free memory, report the error and exit gracefully
+    Whenever an error is encountered, the program has three aims: Free memory, report the error and exit gracefully
     \\
 
     The error reporting is done immediately in whichever function the error is encountered. Then although it would be sufficient to simply exit the program then and there and let the OS de-allocate memory, It is best practice to always deallocate memory, In my program all functions return and indicate to the caller in some way or another that the function failed, which causes to caller to also free memory and return until the main function is reached which is where the program actually always exits.\\
 
-    Since we are reading a cleaned up version of the input in the second pass, the line numbers may not match those in the input, so there is also a struct called \verb|line_mapping| of custom type \verb|vec| that is passed around that contains the mapping between instruction numbers and the line on which they appear in the input file
+    Since we are reading a cleaned up version of the input in the second pass, the line numbers may not match those in the input, so there is also a struct called \verb|line_mapping| of custom type \verb|vec| that is passed around that contains the mapping between instruction numbers and the line on which they appear in the input file, Allowing error reporting code to give the correct line number in its errors
 
     \section{Testing}
     For testing, I used a small set of test cases comprising of:
@@ -98,9 +98,8 @@
 		\item{A single program containing all instructions}
 	\end{itemize}
 	
- Testing is managed by a simple test harness written as a bash script in the tests directory. You can run all tests by running \verb|make run| in the project root\\
+ Testing is managed by a simple test harness I wrote in bash in the tests directory. You can run all tests by running \verb|make test| in the project root\\
 	To have a ``correct'' output to test against, I needed to use another known correct compiler. Since RIPES does not allow you to save the hex output I used an online riscv assembler at https://riscvasm.lucasteske.dev/ to generate a correct version to test against
-	To run the tests one may use the `make run' command from the root directory.
 
     \newpage
     \appendix
@@ -134,6 +133,12 @@
 `-o <filename>`
 `--output <filename>`\end{verbatim}
     Specifies a file for output, defaults to output.hex if not specified
+    \\
+
+    \begin{verbatim}
+`-b`
+`--binary`\end{verbatim}
+    Indicates that the output should be binary, by default output is machine readable hexcodes
 
     \newpage
     \subsection{Project File Structure}
@@ -145,6 +150,7 @@
     +-- build/                  (Object files are placed here)
     +-- report/
     |   +-- AI24BTECH11030.tex  (The latex file for project report)
+    |   +-- (...)               (Other files related to report)
     +-- src/
     |   +-- index.c             (Defines label_index struct)
     |   +-- index.h

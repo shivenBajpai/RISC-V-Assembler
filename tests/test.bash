@@ -6,8 +6,8 @@ echo "===== Running Tests ====="
 
 for test in ${tests[@]}; do
     rm -f "outputs/${test}.txt"
-    ../bin/riscv_asm -q -i "cases/${test}.s" -o "outputs/${test}.hex"
-    hd -e '1/4 "%08x" "\n"' "outputs/${test}.hex" &> "outputs/${test}.txt"
+    ../bin/riscv_asm -q -i "cases/${test}.s" -o "outputs/${test}.txt"
+    #hd -e '1/4 "%08x" "\n"' "outputs/${test}.hex" &> "outputs/${test}.txt"
 
     if cmp -s "outputs/${test}.txt" "cases/expected_${test}.txt"; then
         printf "Case ${test}: PASS\n\n"

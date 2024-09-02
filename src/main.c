@@ -44,15 +44,26 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, vec* line_mapping)
 
 			case ':':
 				if (comment_flag) break;
-				if (lw_flag) printf("WARN: Empty Label on line %d, Ignoring and moving on...\n", linecount);
-				if (line_len >= 128) printf("ERROR: Label too long on line %d, Stopping...\n", linecount);
-				else {	
-					label_buffer[line_len] = '\0';
-					add_label(index, label_buffer, instruction_count);
-					fseek(out_fp, -line_len, SEEK_CUR);
-					instr_flag = false;
-					lw_flag = true;
+				if (lw_flag) { 
+					printf("WARN: Empty Label on line %d, Stopping...\n", linecount);
+					return -1;
 				}
+				if (line_len >= 128) {
+					printf("ERROR: Label too long on line %d, Stopping...\n", linecount);
+					return -2;
+				}
+
+				label_buffer[line_len] = '\0';
+				int prev_line = label_to_position(index, label_buffer);
+				if (prev_line != -1) {
+					printf("ERROR: Pre-existing label defined on line %d repeated on %d, Stopping...\n", line_mapping->values[prev_line], linecount);
+					return -3;
+				}
+				
+				add_label(index, label_buffer, instruction_count);
+				fseek(out_fp, -line_len, SEEK_CUR);
+				instr_flag = false;
+				lw_flag = true;
 				break;
 
 			case ' ':
@@ -137,7 +148,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 						break;
 						
 					default:
-						printf("Error on line %d\nUnclassified type, did you forget to write a case?\n", line_mapping->values[instruction_count]);
+						printf("Error on line %d\nUnclassified type, This should not have happened!\n", line_mapping->values[instruction_count]);
 						return 1;
 				}
 				
@@ -164,14 +175,15 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 int main(int argc, char **argv) {
 
 	bool debug = false;
+	bool binary = false;
 
 	char *input_file_name = "input.s";
 	char *output_file_name = "output.hex";
 
 	for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i],"-d")==0 || strcmp(argv[i],"--debug")==0) {
-			debug = true;
-		}
+        if (strcmp(argv[i],"-d")==0 || strcmp(argv[i],"--debug")==0) debug = true;
+
+		if (strcmp(argv[i],"-b")==0 || strcmp(argv[i],"--binary")==0) binary = true;
 
 		if (strcmp(argv[i],"-i")==0 || strcmp(argv[i],"--input")==0) {
 			i++;
@@ -240,7 +252,12 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	fwrite(hexcode, 4, (line_mapping->len), output_fp);
+	if (binary) fwrite(hexcode, 4, (line_mapping->len), output_fp);
+	else {
+		for (int i=0; i<line_mapping->len; i++) {
+			fprintf(output_fp, "%08x\n", hexcode[i]);
+		}
+	}
 	fclose(output_fp);
 	fclose(clean_fp);
 

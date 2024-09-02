@@ -416,7 +416,7 @@ long I3_type_parser(FILE** args_raw, label_index* labels, int* line_number, int 
         return -1;
     }
 
-    int rearranged_offset = (args[1] & 0x000007FE) << 20;
+    int rearranged_offset = (args[1] & 0x00000FFF) << 20;
     int result = (args[0] << 7) + (args[2] << 15) + rearranged_offset;
 
     free(args);
