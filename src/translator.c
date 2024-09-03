@@ -417,6 +417,12 @@ long U_type_parser(FILE** args_raw, label_index* labels, int* line_number, int i
         return -1;
     }
 
+    if (args[1] < 0 || args[1] > 0xFFFFF) {
+        printf("Error on line %d: Offset does not in range 0x0...0xFFFFF Stopping...\n", *line_number);
+        *fail_flag = true;
+        return -1;
+    }
+
     int result = (args[0] << 7) + (args[1] << 12);
 
     free(args);
