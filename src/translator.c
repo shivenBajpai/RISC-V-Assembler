@@ -127,12 +127,14 @@ const alias registers[] = {
     "t6", 31,
 };
 
+// Names for error reporting purposes
 const char* argument_type_names[] = {
     "Immediate Value",
     "Offset/Flag",
     "Register"
 }; 
 
+// Converts register name into register number 
 int parse_alias(char* name) {
     for (int i = 0; i<65; i++) {
         if (strcmp(name, registers[i].name) == 0) {
@@ -143,6 +145,7 @@ int parse_alias(char* name) {
     return -1;
 }
 
+// Convert instruction name into instruction_info* by looking it up in the list of instructions
 const instruction_info* parse_instruction(char* name) {
     for (int i = 0; i<42; i++) {
         if (strcmp(name, instructions[i].name) == 0) {
@@ -153,18 +156,22 @@ const instruction_info* parse_instruction(char* name) {
     return NULL;
 }
 
+// Generalized Function that parses instruction arguments from the file pointer directly. 
+// What type of arguments to expect is specified in the function's arguments itself
 int* parse_args(FILE** fpp, label_index* labels, int n_args, argument_type* types, int* line_number, int instruction_number) {
     FILE* fp = *fpp;
     int i_args = 0;
     int current_arg = 0;
     char c;
 
-    char* args = malloc(current_arg*128*sizeof(char));
+    // Instruction Arguments are parsed into a single string that is divided into 128 char segments for each argument
+    char* args = malloc(current_arg*128*sizeof(char)); 
     if (!args) {
         printf("Out of memory!");
         return NULL;
     }
 
+    // Seperate the instruction arguments into aforementioned 128 char segments
     while ((c = fgetc(fp)) != EOF) {
         switch (c){
             case ' ':
@@ -213,6 +220,7 @@ int* parse_args(FILE** fpp, label_index* labels, int n_args, argument_type* type
         return NULL;
     }
 
+    // Attempt to parse each argument based on expected type
     for (current_arg=0; current_arg<n_args; current_arg++) {
         char* arg = args + current_arg*128;
 
@@ -289,6 +297,12 @@ int* parse_args(FILE** fpp, label_index* labels, int n_args, argument_type* type
     free(args);
     return converted_args;
 }
+
+// Below are a series of helper functions
+// Each of them simply call the above parses with the right information, and then perform bounds checks and bit manipulation
+// before returning the encoded arguemnts as a long int
+// 
+// The purpose of these functions being defined like this, is to declutter the code for the second_pass function in main.c
 
 long R_type_parser(FILE** args_raw, label_index* labels, int* line_number, int instruction_number, bool* fail_flag) {
     argument_type types[] = {REGISTER, REGISTER, REGISTER};
@@ -459,31 +473,4 @@ long I3_type_parser(FILE** args_raw, label_index* labels, int* line_number, int 
 
     free(args);
     return result;
-    
-    // argument_type types[] = {REGISTER, REGISTER, IMMEDIATE};
-    // printf("1\n");
-    // int* args = parse_args(args_raw, labels, 3, types, line_number, instruction_number);
-
-    // if (!args) {
-    //     argument_type types[] = {REGISTER, IMMEDIATE, REGISTER};
-    //     printf("2\n");
-    //     args = parse_args(args_raw, labels, 3, types, line_number, instruction_number);
-
-    //     if (!args) {
-    //         *fail_flag = true;
-    //         return -1;
-    //     }
-
-    //     int rearranged_offset = (args[1] & 0x000007FE) << 20;
-    //     int result = (args[0] << 7) + (args[2] << 15) + rearranged_offset;
-
-    //     free(args);
-    //     return result;
-    // }
-
-    // int rearranged_offset = (args[2] & 0x000007FE) << 20;
-    // int result = (args[0] << 7) + (args[1] << 15) + rearranged_offset;
-
-    // free(args);
-    // return result;
 }

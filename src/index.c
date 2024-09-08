@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// A key-value (string to int) store that internally handles memory management
+// Used for keeping track of which location every label points to
 typedef struct label_index {
 	size_t len;
 	size_t capacity;
@@ -19,6 +21,7 @@ int add_label(label_index* index, char* in_label, int position) {
 	index->positions[index->len] = position;
 	index->len++;
 
+	// If out of space, double capacity
 	if (index->len == index->capacity) {
 		index->capacity *= 2;
 		char** labels_new = realloc(index->labels, index->capacity * sizeof(char*));

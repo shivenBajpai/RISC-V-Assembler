@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+// Vec is an array-like struct that internally handles allocating more memory as the array expands.
 typedef struct vec {
 	size_t len;
 	size_t capacity;
@@ -31,6 +32,7 @@ int append(vec* array, int value) {
 	array->values[array->len] = value;
 	array->len++;
 
+	// If space is insufficient, we double the capacity
 	if (array->len == array->capacity) {
 		array->capacity *= 2;
 		int* values_new = realloc(array->values, array->capacity * sizeof(char*));
@@ -49,6 +51,7 @@ void free_managed_array(vec* array) {
 	free(array);
 }
 
+// For debugging purposes
 void print_array(vec* index) {
 
 	printf("[");

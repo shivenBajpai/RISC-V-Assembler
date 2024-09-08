@@ -5,17 +5,18 @@
 #include "index.h"
 #include "translator.h"
 
+// Reads in_fp and writes the same to out_fp while ignoring all whitespace, comments and labels (but makes a note of label positions)
 int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, vec* line_mapping) {
 	char c;
 	char label_buffer[128];
 	int linecount = 1;
 	int instruction_count = 0;
 	int line_len = 0;
-	bool comment_flag = false;
-	bool lw_flag = true;
-	bool cw_flag = false;
-	bool whitespace_flag = false;
-	bool instr_flag = false;
+	bool comment_flag = false; // Are we reading a comment
+	bool lw_flag = true; // leading whitespace flag
+	bool cw_flag = false; // consecutive whitespace flag
+	bool whitespace_flag = false; // is the current charachter whitespace (different rules are followed to decide if it should be written to output)
+	bool instr_flag = false; // Was there an instruction on this line
 	bool keep_reading = true;
 
 	while (keep_reading) {
@@ -87,6 +88,8 @@ int first_pass(FILE *in_fp, FILE *out_fp, label_index* index, vec* line_mapping)
 	return 0;
 }
 
+
+// Actually Encode all the instructions and write it to the int array.
 int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapping, bool debug) {
 	
 	char name[8]; // Sufficient for any valid instruction/pseudo instruction in Base class
@@ -101,6 +104,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 
 				// Attempt instruction translation
 				
+				// Checking name of instruction against known instructions
 				const instruction_info* instruction = parse_instruction(name);
 
 				if (!instruction) {
@@ -111,6 +115,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 				int addend = 0;
 				bool fail_flag = false;
 
+				// Parsing arguments of instruction
 				switch (instruction->handler_type) {
 					case R_TYPE:
 						addend = R_type_parser(&clean_fp, index, &line_mapping->values[instruction_count], instruction_count, &fail_flag);
@@ -158,6 +163,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 				
 				if (fail_flag) return 1;
 
+				// Write the instruction to the output buffer
 				hexcode[instruction_count] = instruction->constant + addend;
 				if (debug) printf("Instruction %d: %08X\n", instruction_count, hexcode[instruction_count]);
 				
@@ -166,6 +172,7 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 
 			} else name[i++] = c;
 		} else {
+			// No valid instruction would be this long
 			name[7] = '\0';
 			printf("Error on line %d\nInvalid Instruction: %s\n                     ^^^^^^^^\n", line_mapping->values[instruction_count], name);
 			return 1;
@@ -177,6 +184,8 @@ int second_pass(FILE* clean_fp, int* hexcode, label_index* index, vec* line_mapp
 }
 
 int main(int argc, char **argv) {
+
+	// Initializing and Parsing command line switches
 
 	bool debug = false;
 	bool binary = false;
@@ -211,7 +220,7 @@ int main(int argc, char **argv) {
 		}
     }
 	
-	
+	// Prepare for the First pass
 	FILE *in_fp = fopen(input_file_name, "r");
 	FILE *clean_fp = fopen("cleaned.s", "w+");
 	label_index *index;
@@ -229,11 +238,13 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+	// Perform the first pass
 	if ((result = first_pass(in_fp, clean_fp, index, line_mapping)) != 0) {
 		printf("FATAL: Code Parsing failed with code %d\nExiting...\n", result);
 		return 1;
 	}
-	
+
+	// Prepare for the second pass	
 	fclose(in_fp);
 	fseek(clean_fp, 0, SEEK_SET);
 
@@ -243,13 +254,15 @@ int main(int argc, char **argv) {
 		printf("Labels:\n");
 		debug_print_label_index(index);
 		printf("\n");
-	} // Uncomment This line to get a list of all labels and corresponding instruction numbers in output
+	}
 	
+	// Perform the second pass
 	if ((result = second_pass(clean_fp, hexcode, index, line_mapping, debug)) != 0) {
 		printf("FATAL: Code Compilation failed with code %d\nExiting...\n", result);
 		return 1;
 	}
 
+	// Write to output.hex
 	FILE *output_fp = fopen(output_file_name, "wb");
 	if (!output_fp) {
 		printf("FATAL: Failed to write to %s!\nExiting...\n", output_file_name);
