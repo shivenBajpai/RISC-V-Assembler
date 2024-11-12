@@ -17,7 +17,6 @@ OBJS=$(patsubst ./$(SRCDIR)%,./$(OBJDIR)%,$(OBJ_NAMES))
 TARGET_PATH=./$(OUTDIR)/$(TARGET)
 
 build: $(TARGET_PATH)
-	@cp $(OUTDIR)/$(TARGET) ./
 
 run: $(TARGET_PATH)
 	@cd $(OUTDIR) && ./$(TARGET)
@@ -31,7 +30,7 @@ test: $(TARGET_PATH)
 $(TARGET_PATH): $(OBJS)
 	@echo "Linking..."
 	@$(CC) $(CLFLAGS) -o $(TARGET_PATH) $(OBJS)
-	@echo "Binary generated in /bin, a copy is available at the project root"
+	@echo "Binary generated in /bin"
 
 ./build/%.o: ./$(SRCDIR)/%.c
 	@echo "Compiling $<..."
@@ -47,4 +46,3 @@ clean:
 	-@rm -f ./$(OBJDIR)/*.o
 	-@rm -f ./$(OUTDIR)/$(TARGET)
 	-@rm -f ./$(TEST_TEMPDIR)/*
-	-@rm -f ./$(TARGET)
